@@ -10,7 +10,9 @@ const panel = Color(0xFF1D1D25);
 const muted = Color(0xFF9999A8);
 
 void main() {
-  runApp(const PrashiApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
+  runApp(const MyApp());
 }
 
 class PrashiApp extends StatelessWidget {
