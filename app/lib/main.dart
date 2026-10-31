@@ -493,7 +493,8 @@ class _EditorScreenState extends State<EditorScreen> {
     ),
   ),
 ],
-      body: Column(
+),
+body: Column(
         children: [
           Expanded(
             child: Center(
