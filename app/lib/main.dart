@@ -468,31 +468,31 @@ class _EditorScreenState extends State<EditorScreen> {
         backgroundColor: bg,
         title: const Text('Editing Studio'),
         actions: [
-          TextButton.icon(
-            onPressed: showRatioOptions,
-            icon: const Icon(Icons.aspect_ratio, color: purple),
-            label: const Text(
-              'Ratio',
-              style: TextStyle(color: purple),
-            ),
-          ),
-          TextButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ExportScreen(
-          videoPath: widget.videoPath,
-        ),
-      ),
-    );
-  },
-  child: const Text(
-    'Export',
-    style: TextStyle(color: purple),
+  TextButton.icon(
+    onPressed: showRatioOptions,
+    icon: const Icon(Icons.aspect_ratio, color: purple),
+    label: const Text(
+      'Ratio',
+      style: TextStyle(color: purple),
+    ),
   ),
-),
-      ),
+  TextButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ExportScreen(
+            videoPath: widget.videoPath,
+          ),
+        ),
+      );
+    },
+    child: const Text(
+      'Export',
+      style: TextStyle(color: purple),
+    ),
+  ),
+],
       body: Column(
         children: [
           Expanded(
