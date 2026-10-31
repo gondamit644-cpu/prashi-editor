@@ -12,7 +12,7 @@ const muted = Color(0xFF9999A8);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const MyApp());
+  runApp(const PrashiApp());
 }
 
 class PrashiApp extends StatelessWidget {
