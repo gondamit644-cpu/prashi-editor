@@ -1,9 +1,9 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+
 const purple = Color(0xFF9B5CFF);
 const bg = Color(0xFF101014);
 const panel = Color(0xFF1D1D25);
@@ -61,7 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget toolIcon(IconData icon, String label) {
     return InkWell(
       onTap: newProject,
-      borderRadius: BorderRadius.circular(14),
       child: Column(
         children: [
           Container(
@@ -77,18 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(label, style: const TextStyle(fontSize: 11)),
         ],
       ),
-    );
-  }
-
-  Widget sectionTitle(String title, String action) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(action, style: const TextStyle(color: purple)),
-      ],
     );
   }
 
@@ -128,16 +115,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Text(
                     'CREATE YOUR STORY',
                     style: TextStyle(
-                        color: Colors.white70,
-                        letterSpacing: 2,
-                        fontSize: 11),
+                      color: Colors.white70,
+                      letterSpacing: 2,
+                      fontSize: 11,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   const Text(
                     'Make Amazing Videos',
                     style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold),
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -145,8 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 13),
                     ),
                     icon: const Icon(Icons.add),
                     label: const Text('New Project'),
@@ -155,7 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 27),
-            sectionTitle('Quick Tools', 'Explore'),
+            const Text(
+              'Quick Tools',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,9 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 25),
-            const Text('AI TOOLS',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'AI TOOLS',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 15),
             GridView.count(
               crossAxisCount: 2,
@@ -186,7 +177,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 25),
-            sectionTitle('Editing Studio', 'New'),
+            const Text(
+              'Editing Studio',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -196,27 +190,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.movie_creation_outlined,
-                      size: 38, color: purple),
+                  const Icon(
+                    Icons.movie_creation_outlined,
+                    size: 38,
+                    color: purple,
+                  ),
                   const SizedBox(width: 13),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Start Editing',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold)),
+                        Text(
+                          'Start Editing',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
-                        Text('Choose a video from your Gallery',
-                            style: TextStyle(
-                                color: muted, fontSize: 12)),
+                        Text(
+                          'Choose a video from your Gallery',
+                          style: TextStyle(color: muted, fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: newProject,
-                    icon: const Icon(Icons.arrow_forward_ios,
-                        color: purple),
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: purple,
+                    ),
                   ),
                 ],
               ),
@@ -234,18 +235,22 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         destinations: const [
           NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home'),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.video_library_outlined),
-              label: 'Projects'),
+            icon: Icon(Icons.video_library_outlined),
+            label: 'Projects',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: 'AI Tools'),
+            icon: Icon(Icons.auto_awesome_outlined),
+            label: 'AI Tools',
+          ),
           NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              label: 'Me'),
+            icon: Icon(Icons.person_outline),
+            label: 'Me',
+          ),
         ],
       ),
     );
@@ -271,8 +276,7 @@ class HomeTool extends StatelessWidget {
           Icon(icon, color: purple, size: 21),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(title,
-                style: const TextStyle(fontSize: 12)),
+            child: Text(title, style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -288,284 +292,6 @@ class EditorScreen extends StatefulWidget {
   @override
   State<EditorScreen> createState() => _EditorScreenState();
 }
-
-class _EditorScreenState extends State<EditorScreen> {
-  VideoPlayerController? controller;
-  bool loading = true;
-  int selectedTool = 0;
-
-  final tools = const [
-    ['Edit', Icons.tune],
-    ['Audio', Icons.music_note],
-    ['Text', Icons.text_fields],
-    ['Effects', Icons.auto_awesome],
-    ['Filters', Icons.filter],
-    ['Overlay', Icons.layers],
-    ['Captions', Icons.closed_caption],
-    ['Export', Icons.download],
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    initializeVideo();
-  }
-
-  Future<void> initializeVideo() async {
-    final c = VideoPlayerController.file(File(widget.videoPath));
-    try {
-      await c.initialize();
-      if (!mounted) {
-        await c.dispose();
-        return;
-      }
-      setState(() {
-        controller = c;
-        loading = false;
-      });
-    } catch (e) {
-      await c.dispose();
-      if (mounted) {
-        setState(() => loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Video खुल नहीं पाया: $e')),
-        );
-      }
-    }
-  }
-
-  String timeText(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  void showTool(String name) {
-    if (name == 'Edit') {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => const ToolInfo(
-          title: 'Edit Tools',
-          items: ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
-        ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => ToolInfo(
-          title: name,
-          items: const [
-            'Choose a tool',
-            'More editing features will be added in future updates',
-          ],
-        ),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final video = controller;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: bg,
-        title: const Text('Editing Studio'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export feature अगली update में आएगा'),
-                ),
-              );
-            },
-            child: const Text('Export',
-                style: TextStyle(color: purple)),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: loading
-                  ? const CircularProgressIndicator()
-                  : video != null && video.value.isInitialized
-                      ? AspectRatio(
-                          aspectRatio: video.value.aspectRatio,
-                          child: VideoPlayer(video),
-                        )
-                      : const Text('Video load नहीं हुआ'),
-            ),
-          ),
-          if (video != null && video.value.isInitialized) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Row(
-                children: [
-                  Text(timeText(video.value.position),
-                      style: const TextStyle(fontSize: 11)),
-                  Expanded(
-                    child: VideoProgressIndicator(
-                      video,
-                      allowScrubbing: true,
-                      padding: const EdgeInsets.all(12),
-                    ),
-                  ),
-                  Text(timeText(video.value.duration),
-
-class _EditorScreenState extends State<EditorScreen> {
-  late final Player player;
-  late final VideoController videoController;
-
-  bool loading = true;
-  int selectedTool = 0;
-  String? errorMessage;
-
-  final tools = const [
-    ['Edit', Icons.tune],
-    ['Audio', Icons.music_note],
-    ['Text', Icons.text_fields],
-    ['Effects', Icons.auto_awesome],
-    ['Filters', Icons.filter],
-    ['Overlay', Icons.layers],
-    ['Captions', Icons.closed_caption],
-    ['Export', Icons.download],
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    player = Player();
-    videoController = VideoController(player);
-    initializeVideo();
-  }
-
-  Future<void> initializeVideo() async {
-    try {
-      await player.open(
-        Media(widget.videoPath),
-        play: false,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        errorMessage = null;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        errorMessage = 'Video खुल नहीं पाया: $e';
-      });
-    }
-  }
-
-  String timeText(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  void showTool(String name) {
-    if (name == 'Edit') {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => const ToolInfo(
-          title: 'Edit Tools',
-          items: ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
-        ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => ToolInfo(
-          title: name,
-          items: const [
-            'Choose a tool',
-            'More editing features will be added in future updates',
-          ],
-        ),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    player.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: bg,
-        title: const Text('Editing Studio'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export feature अगली update में आएगा'),
-                ),
-              );
-            },
-            child: const Text(
-              'Export',
-              style: TextStyle(color: purple),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: loading
-                  ? const CircularProgressIndicator()
-                  : errorMessage != null
-                      ? Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            errorMessage!,
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      : Video(
-                          controller: videoController,
-                          fit: BoxFit.contain,
-                        ),
-            ),
-          ),
-
-          if (!loading && errorMessage == null) ...[
-            StreamBuilder<Duration>(
-              stream: player.stream.position,
-              initialData: Duration.zero,
-              builder: (context, positionSnapshot) {
-                final position =
-                    positionSnapshot.data ?? Duration.zero;
-
-                return StreamBuilder<Duration>(
-                  stream: player.stream.duration,
-                  initialData: Duration.zero,
-                  builder: (context, durationSnapshot) {
-                    final duration =
 
 class _EditorScreenState extends State<EditorScreen> {
   late final Player player;
@@ -627,14 +353,7 @@ class _EditorScreenState extends State<EditorScreen> {
         backgroundColor: panel,
         builder: (_) => const ToolInfo(
           title: 'Edit Tools',
-          items: [
-            'Trim',
-            'Split',
-            'Crop',
-            'Rotate',
-            'Speed',
-            'Reverse',
-          ],
+          items: ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
         ),
       );
     } else {
@@ -700,14 +419,12 @@ class _EditorScreenState extends State<EditorScreen> {
                         ),
             ),
           ),
-
           if (!loading && errorMessage == null) ...[
             StreamBuilder<Duration>(
               stream: player.stream.position,
               initialData: Duration.zero,
               builder: (context, positionSnapshot) {
-                final position =
-                    positionSnapshot.data ?? Duration.zero;
+                final position = positionSnapshot.data ?? Duration.zero;
 
                 return StreamBuilder<Duration>(
                   stream: player.stream.duration,
@@ -721,16 +438,11 @@ class _EditorScreenState extends State<EditorScreen> {
 
                     final currentValue = position.inMilliseconds
                         .toDouble()
-                        .clamp(
-                          0.0,
-                          maxValue > 0 ? maxValue : 1.0,
-                        )
+                        .clamp(0.0, maxValue > 0 ? maxValue : 1.0)
                         .toDouble();
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Row(
                         children: [
                           Text(
@@ -764,7 +476,6 @@ class _EditorScreenState extends State<EditorScreen> {
                 );
               },
             ),
-
             StreamBuilder<bool>(
               stream: player.stream.playing,
               initialData: false,
@@ -782,15 +493,12 @@ class _EditorScreenState extends State<EditorScreen> {
                     }
                   },
                   icon: Icon(
-                    isPlaying
-                        ? Icons.pause_circle
-                        : Icons.play_circle,
+                    isPlaying ? Icons.pause_circle : Icons.play_circle,
                   ),
                 );
               },
             ),
           ],
-
           Container(
             height: 85,
             margin: const EdgeInsets.all(12),
@@ -813,7 +521,6 @@ class _EditorScreenState extends State<EditorScreen> {
               ],
             ),
           ),
-
           Container(
             height: 105,
             color: panel,
@@ -859,8 +566,6 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 }
 
-
-
 class ToolInfo extends StatelessWidget {
   final String title;
   final List<String> items;
@@ -880,15 +585,23 @@ class ToolInfo extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
-            ...items.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Text(item,
-                      style: const TextStyle(color: Colors.white70)),
-                )),
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                child: Text(
+                  item,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
             const SizedBox(height: 15),
           ],
         ),
@@ -896,4 +609,3 @@ class ToolInfo extends StatelessWidget {
     );
   }
 }
-
