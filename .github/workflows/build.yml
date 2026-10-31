@@ -32,7 +32,9 @@ jobs:
 
       - name: Restore App Code
         run: cp /tmp/prashi_main.dart app/lib/main.dart
-
+      - name: Install Video Packages
+        run: flutter pub add image_picker video_player
+        working-directory: app
       - name: Build APK
         run: flutter build apk --release
         working-directory: app
