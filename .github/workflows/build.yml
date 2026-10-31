@@ -24,17 +24,21 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter App
-        run: |
-          if [ ! -f pubspec.yaml ]; then
-            flutter create . --project-name prashi_toon_editor --platforms=android
-          fi
+      - name: Save App Code
+        run: cp app/lib/main.dart /tmp/prashi_main.dart
+
+      - name: Create Flutter Project
+        run: flutter create app --project-name prashi_toon_editor --platforms=android
+
+      - name: Restore App Code
+        run: cp /tmp/prashi_main.dart app/lib/main.dart
 
       - name: Build APK
         run: flutter build apk --release
+        working-directory: app
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Prashi-Toon-Editor-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
