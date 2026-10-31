@@ -422,6 +422,15 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void showTool(String name) {
+    if (name == 'Export') {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ExportScreen(videoPath: widget.videoPath),
+    ),
+  );
+  return;
+    }
     if (name == 'Edit') {
       showModalBottomSheet(
         context: context,
@@ -468,19 +477,21 @@ class _EditorScreenState extends State<EditorScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export feature अगली update में आएगा'),
-                ),
-              );
-            },
-            child: const Text(
-              'Export',
-              style: TextStyle(color: purple),
-            ),
-          ),
-        ],
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExportScreen(
+          videoPath: widget.videoPath,
+        ),
+      ),
+    );
+  },
+  child: const Text(
+    'Export',
+    style: TextStyle(color: purple),
+  ),
+),
       ),
       body: Column(
         children: [
@@ -704,6 +715,409 @@ class ToolInfo extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class ExportScreen extends StatefulWidget {
+  final String videoPath;
+
+  const ExportScreen({
+    super.key,
+    required this.videoPath,
+  });
+
+  @override
+  State<ExportScreen> createState() => _ExportScreenState();
+}
+
+class _ExportScreenState extends State<ExportScreen> {
+  bool isGif = false;
+  bool aiUltraHD = false;
+  bool opticalFlow = false;
+
+  int resolutionIndex = 2;
+  int frameRateIndex = 2;
+  int bitrateIndex = 1;
+  int gifQualityIndex = 0;
+
+  String exportMode = 'AI UHD';
+
+  final resolutions = ['480p', '720p', '1080p', '2K', '4K'];
+  final frameRates = ['24', '25', '30', '50', '60'];
+  final bitrates = ['5', '10', '20', '50', '100'];
+  final gifQualities = ['240P', '320P', '640P'];
+
+  Widget topTab(String title, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : Colors.white38,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Container(
+              height: 3,
+              width: 43,
+              decoration: BoxDecoration(
+                color: selected ? Color(0xFF25D9E8) : Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget sectionTitle(String title, String subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 16)),
+        Flexible(
+          child: Text(
+            subtitle,
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Colors.white38, fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget switchRow(
+    String title,
+    String subtitle,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 5),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeThumbColor: Color(0xFF25D9E8),
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget qualityCard(
+    String quality,
+    String description,
+    bool selected,
+    VoidCallback onTap,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 135,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFF292929),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? Colors.white : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                quality,
+                style: const TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(height: 1, color: Colors.white12),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget sliderSection({
+    required String title,
+    required String subtitle,
+    required int value,
+    required List<String> labels,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        sectionTitle(title, subtitle),
+        const SizedBox(height: 12),
+        Slider(
+          value: value.toDouble(),
+          min: 0,
+          max: (labels.length - 1).toDouble(),
+          divisions: labels.length - 1,
+          activeColor: const Color(0xFF25D9E8),
+          inactiveColor: Colors.white24,
+          onChanged: (v) => onChanged(v.round()),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: labels
+              .map(
+                (label) => Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  void startExport() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Export settings तैयार हैं। Video/GIF सेव करने की सुविधा अभी जोड़नी बाकी है।',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF151515),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 5),
+              child: Row(
+                children: [
+                  topTab('Video', !isGif, () {
+                    setState(() => isGif = false);
+                  }),
+                  topTab('GIF', isGif, () {
+                    setState(() => isGif = true);
+                  }),
+                  const Spacer(),
+                  PopupMenuButton<String>(
+                    color: const Color(0xFF303030),
+                    initialValue: exportMode,
+                    onSelected: (value) {
+                      setState(() => exportMode = value);
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'AI UHD',
+                        child: Text('AI UHD'),
+                      ),
+                      PopupMenuItem(
+                        value: 'Recommended',
+                        child: Text('Recommended'),
+                      ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 13,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF303030),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(exportMode),
+                          const Icon(Icons.arrow_drop_up),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: startExport,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF20CDE0),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 13,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Export'),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 25),
+                children: [
+                  if (isGif) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: List.generate(3, (index) {
+                        return qualityCard(
+                          gifQualities[index],
+                          ['Standard', 'High', 'Ultra high'][index],
+                          gifQualityIndex == index,
+                          () {
+                            setState(() => gifQualityIndex = index);
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 25),
+                    const Divider(color: Colors.white12),
+                    const SizedBox(height: 15),
+                    const Center(
+                      child: Text(
+                        'GIF export quality selected',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                  ] else ...[
+                    switchRow(
+                      'AI Ultra HD',
+                      'Make your video clearer and smoother with AI enhancement and frame interpolation.',
+                      aiUltraHD,
+                      (value) => setState(() => aiUltraHD = value),
+                    ),
+                    const SizedBox(height: 22),
+                    sliderSection(
+                      title: 'Resolution',
+                      subtitle: 'High definition - the ultimate viewing experience',
+                      value: resolutionIndex,
+                      labels: resolutions,
+                      onChanged: (value) {
+                        setState(() => resolutionIndex = value);
+                      },
+                    ),
+                    const SizedBox(height: 35),
+                    sliderSection(
+                      title: 'Frame rate',
+                      subtitle: 'Smoother playback',
+                      value: frameRateIndex,
+                      labels: frameRates,
+                      onChanged: (value) {
+                        setState(() => frameRateIndex = value);
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    switchRow(
+                      'Optical flow',
+                      'Make video playback smoother.',
+                      opticalFlow,
+                      (value) => setState(() => opticalFlow = value),
+                    ),
+                    const SizedBox(height: 25),
+                    sliderSection(
+                      title: 'Bitrate (Mbps)',
+                      subtitle: 'Recommended for this video (12)',
+                      value: bitrateIndex,
+                      labels: bitrates,
+                      onChanged: (value) {
+                        setState(() => bitrateIndex = value);
+                      },
+                    ),
+                    const SizedBox(height: 25),
+                    const Divider(color: Colors.white12),
+                    const SizedBox(height: 20),
+                    const Center(
+                      child: Text(
+                        'Estimated file size will appear here',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    Container(
+                      height: 105,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF261044),
+                            Color(0xFF090909),
+                          ],
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          SizedBox(width: 18),
+                          Icon(
+                            Icons.settings_suggest,
+                            color: Color(0xFFB66CFF),
+                            size: 35,
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'More export settings',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white70,
+                            size: 17,
+                          ),
+                          SizedBox(width: 15),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
