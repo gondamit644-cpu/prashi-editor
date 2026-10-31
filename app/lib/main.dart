@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
-void main() {
-  runApp(const PrashiApp());
-}
-
 const purple = Color(0xFF9B5CFF);
 const bg = Color(0xFF101014);
 const panel = Color(0xFF1D1D25);
+const muted = Color(0xFF9999A8);
+
+void main() {
+  runApp(const PrashiApp());
+}
 
 class PrashiApp extends StatelessWidget {
   const PrashiApp({super.key});
@@ -17,63 +18,347 @@ class PrashiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Prashi Toon Editor',
-      theme: ThemeData.dark().copyWith(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: bg,
         colorScheme: ColorScheme.dark(primary: purple),
+        useMaterial3: true,
       ),
-      home: const EditorHome(),
+      home: const HomeScreen(),
     );
   }
 }
 
-class EditorHome extends StatefulWidget {
-  const EditorHome({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<EditorHome> createState() => _EditorHomeState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _EditorHomeState extends State<EditorHome> {
-  VideoPlayerController? controller;
-  bool loading = false;
+class _HomeScreenState extends State<HomeScreen> {
+  int selectedTab = 0;
 
-  Future<void> pickVideo() async {
+  Future<void> newProject() async {
     final picker = ImagePicker();
+    final file = await picker.pickVideo(source: ImageSource.gallery);
 
-    final file = await picker.pickVideo(
-      source: ImageSource.gallery,
+    if (file == null || !mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditorScreen(videoPath: file.path),
+      ),
     );
+  }
 
-    if (file == null) return;
+  Widget toolIcon(IconData icon, String label) {
+    return InkWell(
+      onTap: newProject,
+      borderRadius: BorderRadius.circular(14),
+      child: Column(
+        children: [
+          Container(
+            height: 54,
+            width: 54,
+            decoration: BoxDecoration(
+              color: panel,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: purple, size: 27),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 11)),
+        ],
+      ),
+    );
+  }
 
-    setState(() => loading = true);
+  Widget sectionTitle(String title, String action) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(action, style: const TextStyle(color: purple)),
+      ],
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: bg,
+        title: const Text(
+          'Prashi Toon Editor',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF52259C), Color(0xFF24163E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CREATE YOUR STORY',
+                    style: TextStyle(
+                        color: Colors.white70,
+                        letterSpacing: 2,
+                        fontSize: 11),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Make Amazing Videos',
+                    style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: newProject,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 13),
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New Project'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 27),
+            sectionTitle('Quick Tools', 'Explore'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                toolIcon(Icons.content_cut, 'Trim'),
+                toolIcon(Icons.speed, 'Speed'),
+                toolIcon(Icons.music_note, 'Music'),
+                toolIcon(Icons.text_fields, 'Text'),
+              ],
+            ),
+            const SizedBox(height: 25),
+            const Text('AI TOOLS',
+                style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.5,
+              children: const [
+                HomeTool(Icons.auto_awesome, 'AI Effects'),
+                HomeTool(Icons.closed_caption, 'Auto Captions'),
+                HomeTool(Icons.face_retouching_natural, 'Beauty'),
+                HomeTool(Icons.video_library, 'Video Templates'),
+              ],
+            ),
+            const SizedBox(height: 25),
+            sectionTitle('Editing Studio', 'New'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: panel,
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.movie_creation_outlined,
+                      size: 38, color: purple),
+                  const SizedBox(width: 13),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Start Editing',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold)),
+                        SizedBox(height: 4),
+                        Text('Choose a video from your Gallery',
+                            style: TextStyle(
+                                color: muted, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: newProject,
+                    icon: const Icon(Icons.arrow_forward_ios,
+                        color: purple),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: panel,
+        indicatorColor: purple.withOpacity(0.25),
+        selectedIndex: selectedTab,
+        onDestinationSelected: (value) {
+          setState(() => selectedTab = value);
+          if (value == 1) newProject();
+        },
+        destinations: const [
+          NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.video_library_outlined),
+              label: 'Projects'),
+          NavigationDestination(
+              icon: Icon(Icons.auto_awesome_outlined),
+              label: 'AI Tools'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              label: 'Me'),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeTool extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const HomeTool(this.icon, this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: panel,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: purple, size: 21),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(title,
+                style: const TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EditorScreen extends StatefulWidget {
+  final String videoPath;
+
+  const EditorScreen({super.key, required this.videoPath});
+
+  @override
+  State<EditorScreen> createState() => _EditorScreenState();
+}
+
+class _EditorScreenState extends State<EditorScreen> {
+  VideoPlayerController? controller;
+  bool loading = true;
+  int selectedTool = 0;
+
+  final tools = const [
+    ['Edit', Icons.tune],
+    ['Audio', Icons.music_note],
+    ['Text', Icons.text_fields],
+    ['Effects', Icons.auto_awesome],
+    ['Filters', Icons.filter],
+    ['Overlay', Icons.layers],
+    ['Captions', Icons.closed_caption],
+    ['Export', Icons.download],
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    initializeVideo();
+  }
+
+  Future<void> initializeVideo() async {
+    final c = VideoPlayerController.file(File(widget.videoPath));
     try {
-      await controller?.dispose();
-
-      final newController =
-          VideoPlayerController.file(File(file.path));
-
-      await newController.initialize();
-
+      await c.initialize();
       if (!mounted) {
-        await newController.dispose();
+        await c.dispose();
         return;
       }
-
       setState(() {
-        controller = newController;
+        controller = c;
         loading = false;
       });
     } catch (e) {
+      await c.dispose();
       if (mounted) {
         setState(() => loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Video नहीं खुला: $e')),
+          SnackBar(content: Text('Video खुल नहीं पाया: $e')),
         );
       }
+    }
+  }
+
+  String timeText(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  void showTool(String name) {
+    if (name == 'Edit') {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: panel,
+        builder: (_) => const ToolInfo(
+          title: 'Edit Tools',
+          items: ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: panel,
+        builder: (_) => ToolInfo(
+          title: name,
+          items: const [
+            'Choose a tool',
+            'More editing features will be added in future updates',
+          ],
+        ),
+      );
     }
   }
 
@@ -89,16 +374,19 @@ class _EditorHomeState extends State<EditorHome> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Prashi Toon Editor',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: panel,
+        backgroundColor: bg,
+        title: const Text('Editing Studio'),
         actions: [
-          IconButton(
-            onPressed: pickVideo,
-            icon: const Icon(Icons.video_library),
-            tooltip: 'Gallery',
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Export feature अगली update में आएगा'),
+                ),
+              );
+            },
+            child: const Text('Export',
+                style: TextStyle(color: purple)),
           ),
         ],
       ),
@@ -113,66 +401,136 @@ class _EditorHomeState extends State<EditorHome> {
                           aspectRatio: video.value.aspectRatio,
                           child: VideoPlayer(video),
                         )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.movie_creation_outlined,
-                              size: 85,
-                              color: purple,
-                            ),
-                            SizedBox(height: 15),
-                            Text(
-                              'अपना वीडियो चुनें',
-                              style: TextStyle(fontSize: 20),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Gallery से वीडियो लाने के लिए नीचे दबाएँ',
-                              style: TextStyle(color: Colors.white60),
-                            ),
-                          ],
-                        ),
+                      : const Text('Video load नहीं हुआ'),
             ),
           ),
-          if (video != null && video.value.isInitialized)
-            VideoProgressIndicator(
-              video,
-              allowScrubbing: true,
-              padding: const EdgeInsets.all(12),
-            ),
-          Container(
-            color: panel,
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: pickVideo,
-                  icon: const Icon(Icons.video_library),
-                  label: const Text('Video चुनें'),
-                ),
-                if (video != null && video.value.isInitialized)
-                  IconButton(
-                    iconSize: 42,
-                    color: purple,
-                    onPressed: () {
-                      setState(() {
-                        video.value.isPlaying
-                            ? video.pause()
-                            : video.play();
-                      });
-                    },
-                    icon: Icon(
-                      video.value.isPlaying
-                          ? Icons.pause_circle
-                          : Icons.play_circle,
+          if (video != null && video.value.isInitialized) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Row(
+                children: [
+                  Text(timeText(video.value.position),
+                      style: const TextStyle(fontSize: 11)),
+                  Expanded(
+                    child: VideoProgressIndicator(
+                      video,
+                      allowScrubbing: true,
+                      padding: const EdgeInsets.all(12),
                     ),
                   ),
+                  Text(timeText(video.value.duration),
+                      style: const TextStyle(fontSize: 11)),
+                ],
+              ),
+            ),
+            IconButton(
+              iconSize: 45,
+              color: purple,
+              onPressed: () {
+                setState(() {
+                  video.value.isPlaying
+                      ? video.pause()
+                      : video.play();
+                });
+              },
+              icon: Icon(
+                video.value.isPlaying
+                    ? Icons.pause_circle
+                    : Icons.play_circle,
+              ),
+            ),
+          ],
+          Container(
+            height: 85,
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: panel,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.movie, color: purple),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text('Video Timeline',
+                      style: TextStyle(fontSize: 12)),
+                ),
+                const Icon(Icons.graphic_eq, color: muted),
               ],
             ),
           ),
+          Container(
+            height: 105,
+            color: panel,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: tools.length,
+              itemBuilder: (context, index) {
+                final item = tools[index];
+                final active = selectedTool == index;
+                return InkWell(
+                  onTap: () {
+                    setState(() => selectedTool = index);
+                    showTool(item[0] as String);
+                  },
+                  child: SizedBox(
+                    width: 76,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(item[1] as IconData,
+                            color: active ? purple : Colors.white70),
+                        const SizedBox(height: 7),
+                        Text(item[0] as String,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: active ? purple : Colors.white70,
+                            )),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class ToolInfo extends StatelessWidget {
+  final String title;
+  final List<String> items;
+
+  const ToolInfo({
+    super.key,
+    required this.title,
+    required this.items,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...items.map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Text(item,
+                      style: const TextStyle(color: Colors.white70)),
+                )),
+            const SizedBox(height: 15),
+          ],
+        ),
       ),
     );
   }
