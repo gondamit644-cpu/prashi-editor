@@ -566,6 +566,154 @@ class _EditorScreenState extends State<EditorScreen> {
                   initialData: Duration.zero,
                   builder: (context, durationSnapshot) {
                     final duration =
+
+class _EditorScreenState extends State<EditorScreen> {
+  late final Player player;
+  late final VideoController videoController;
+
+  bool loading = true;
+  int selectedTool = 0;
+  String? errorMessage;
+
+  final tools = const [
+    ['Edit', Icons.tune],
+    ['Audio', Icons.music_note],
+    ['Text', Icons.text_fields],
+    ['Effects', Icons.auto_awesome],
+    ['Filters', Icons.filter],
+    ['Overlay', Icons.layers],
+    ['Captions', Icons.closed_caption],
+    ['Export', Icons.download],
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    player = Player();
+    videoController = VideoController(player);
+    initializeVideo();
+  }
+
+  Future<void> initializeVideo() async {
+    try {
+      await player.open(Media(widget.videoPath), play: false);
+
+      if (!mounted) return;
+
+      setState(() {
+        loading = false;
+        errorMessage = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        loading = false;
+        errorMessage = 'Video खुल नहीं पाया: $e';
+      });
+    }
+  }
+
+  String timeText(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  void showTool(String name) {
+    if (name == 'Edit') {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: panel,
+        builder: (_) => const ToolInfo(
+          title: 'Edit Tools',
+          items: [
+            'Trim',
+            'Split',
+            'Crop',
+            'Rotate',
+            'Speed',
+            'Reverse',
+          ],
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: panel,
+        builder: (_) => ToolInfo(
+          title: name,
+          items: const [
+            'Choose a tool',
+            'More editing features will be added in future updates',
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: bg,
+        title: const Text('Editing Studio'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Export feature अगली update में आएगा'),
+                ),
+              );
+            },
+            child: const Text(
+              'Export',
+              style: TextStyle(color: purple),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: loading
+                  ? const CircularProgressIndicator()
+                  : errorMessage != null
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            errorMessage!,
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : Video(
+                          controller: videoController,
+                          fit: BoxFit.contain,
+                        ),
+            ),
+          ),
+
+          if (!loading && errorMessage == null) ...[
+            StreamBuilder<Duration>(
+              stream: player.stream.position,
+              initialData: Duration.zero,
+              builder: (context, positionSnapshot) {
+                final position =
+                    positionSnapshot.data ?? Duration.zero;
+
+                return StreamBuilder<Duration>(
+                  stream: player.stream.duration,
+                  initialData: Duration.zero,
+                  builder: (context, durationSnapshot) {
+                    final duration =
                         durationSnapshot.data ?? Duration.zero;
 
                     final maxValue =
@@ -573,44 +721,44 @@ class _EditorScreenState extends State<EditorScreen> {
 
                     final currentValue = position.inMilliseconds
                         .toDouble()
-                        .clamp(0.0, maxValue > 0 ? maxValue : 1.0);
+                        .clamp(
+                          0.0,
+                          maxValue > 0 ? maxValue : 1.0,
+                        )
+                        .toDouble();
 
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 15,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            timeText(position),
+                            style: const TextStyle(fontSize: 11),
                           ),
-                          child: Row(
-                            children: [
-                              Text(
-                                timeText(position),
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              Expanded(
-                                child: Slider(
-                                  value: currentValue,
-                                  max: maxValue > 0 ? maxValue : 1.0,
-                                  activeColor: purple,
-                                  onChanged: duration.inMilliseconds > 0
-                                      ? (value) {
-                                          player.seek(
-                                            Duration(
-                                              milliseconds: value.round(),
-                                            ),
-                                          );
-                                        }
-                                      : null,
-                                ),
-                              ),
-                              Text(
-                                timeText(duration),
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ],
+                          Expanded(
+                            child: Slider(
+                              value: currentValue,
+                              max: maxValue > 0 ? maxValue : 1.0,
+                              activeColor: purple,
+                              onChanged: duration.inMilliseconds > 0
+                                  ? (value) {
+                                      player.seek(
+                                        Duration(
+                                          milliseconds: value.round(),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                            ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            timeText(duration),
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 );
@@ -710,6 +858,7 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 }
+
 
 
 class ToolInfo extends StatelessWidget {
