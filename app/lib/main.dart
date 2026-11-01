@@ -1088,9 +1088,8 @@ class _ExportScreenState extends State<ExportScreen> {
         final fps = frameRates[frameRateIndex];
         final bitrate = bitrates[bitrateIndex];
 
-        final filters = <String>[
-          "scale='if(gte(iw,ih),$height,-2)':"
-              "'if(gte(iw,ih),-2,$height)':force_divisible_by=2",
+        "scale='if(gte(iw\\,ih)\\,$height\\,-2)':"
+"'if(gte(iw\\,ih)\\,-2\\,$height)':force_divisible_by=2",
           'fps=$fps',
         ];
 
