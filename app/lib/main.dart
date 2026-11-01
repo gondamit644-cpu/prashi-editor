@@ -8,7 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
-
+import 'package:share_plus/share_plus.dart';
+import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
+import 'dart:async';
 const purple = Color(0xFF9B5CFF);
 const bg = Color(0xFF101014);
 const panel = Color(0xFF1D1D25);
@@ -729,6 +731,7 @@ class ToolInfo extends StatelessWidget {
   }
 }
 
+
 class ExportScreen extends StatefulWidget {
   final String videoPath;
 
@@ -745,8 +748,12 @@ class _ExportScreenState extends State<ExportScreen> {
   bool isGif = false;
   bool aiUltraHD = false;
   bool opticalFlow = false;
-  bool showSettings = true;
   bool exporting = false;
+  bool exportComplete = false;
+
+  double progress = 0.01;
+  String progressMessage = 'Preparing video...';
+  String? exportError;
 
   int resolutionIndex = 2;
   int frameRateIndex = 2;
@@ -762,7 +769,10 @@ class _ExportScreenState extends State<ExportScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 12,
+        ),
         child: Column(
           children: [
             Text(
@@ -935,54 +945,154 @@ class _ExportScreenState extends State<ExportScreen> {
     return '"${path.replaceAll('"', '\\"')}"';
   }
 
-  Future<void> startExport() async {
+  Future<double> getVideoDuration() async {
+    try {
+      final probe =
+          await FFprobeKit.getMediaInformation(widget.videoPath);
+      final info = probe.getMediaInformation();
+      return (double.tryParse(info?.getDuration() ?? '') ?? 0) * 1000;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Widget shareOption({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 76,
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 30),
+            const SizedBox(width: 17),
+            Expanded(
+              child: Text(title, style: const TextStyle(fontSize: 16)),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void showExportOptions() {
     if (exporting) return;
 
-    setState(() => exporting = true);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF191919),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 25),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          'Export',
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close, size: 29),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                shareOption(
+                  icon: Icons.camera_alt,
+                  title: 'Save and share to Instagram',
+                  color: const Color(0xFFE1306C),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    startExport(shareAfter: true);
+                  },
+                ),
+                const SizedBox(height: 12),
+                shareOption(
+                  icon: Icons.save_alt,
+                  title: 'Save to device',
+                  color: Colors.white,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    startExport();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> startExport({bool shareAfter = false}) async {
+    if (exporting) return;
+
+    setState(() {
+      exporting = true;
+      exportComplete = false;
+      exportError = null;
+      progress = 0.01;
+      progressMessage = 'Preparing video...';
+    });
 
     try {
       final directory = await getTemporaryDirectory();
       final stamp = DateTime.now().millisecondsSinceEpoch;
 
-      final String outputPath;
+      final outputPath = isGif
+          ? '${directory.path}/prashi_$stamp.gif'
+          : '${directory.path}/prashi_$stamp.mp4';
+
+      final totalDuration = await getVideoDuration();
+
+      String command;
 
       if (isGif) {
-        outputPath = '${directory.path}/prashi_$stamp.gif';
+        final sizes = [240, 320, 640];
+        final size = sizes[gifQualityIndex];
 
-        final gifSizes = [240, 320, 640];
-        final size = gifSizes[gifQualityIndex];
-
-        final command =
+        command =
             '-y -i ${quotePath(widget.videoPath)} '
             '-vf "fps=15,scale=$size:-1:flags=lanczos,'
             'split[s0][s1];[s0]palettegen[p];'
             '[s1][p]paletteuse" '
             '-loop 0 ${quotePath(outputPath)}';
-
-        final session = await FFmpegKit.execute(command);
-        final returnCode = await session.getReturnCode();
-
-        if (!ReturnCode.isSuccess(returnCode)) {
-          final logs = await session.getAllLogsAsString();
-          throw Exception(logs ?? 'GIF बनाने में समस्या आई।');
-        }
       } else {
-        outputPath = '${directory.path}/prashi_$stamp.mp4';
-
         final heights = [480, 720, 1080, 1440, 2160];
         final height = heights[resolutionIndex];
         final fps = frameRates[frameRateIndex];
         final bitrate = bitrates[bitrateIndex];
 
-        final filters = <String>[];
-
-        filters.add(
+        final filters = <String>[
           "scale='if(gte(iw,ih),$height,-2)':"
-          "'if(gte(iw,ih),-2,$height)':"
-          'force_divisible_by=2',
-        );
-
-        filters.add('fps=$fps');
+              "'if(gte(iw,ih),-2,$height)':force_divisible_by=2",
+          'fps=$fps',
+        ];
 
         if (aiUltraHD) {
           filters.add('unsharp=5:5:0.8:3:3:0.4');
@@ -992,27 +1102,68 @@ class _ExportScreenState extends State<ExportScreen> {
           filters.add('minterpolate=fps=$fps');
         }
 
-        final command =
+        command =
             '-y -i ${quotePath(widget.videoPath)} '
             '-vf "${filters.join(',')}" '
             '-c:v libx264 -preset ultrafast '
-'-threads 2 '
-'-b:v ${bitrate}M '
-'-maxrate ${bitrate}M '
-'-bufsize ${bitrate}M '
+            '-threads 2 '
+            '-b:v ${bitrate}M '
+            '-maxrate ${bitrate}M '
+            '-bufsize ${bitrate * 2}M '
             '-pix_fmt yuv420p '
             '-c:a aac -b:a 192k '
             '-movflags +faststart '
             '${quotePath(outputPath)}';
-
-        final session = await FFmpegKit.execute(command);
-        final returnCode = await session.getReturnCode();
-
-        if (!ReturnCode.isSuccess(returnCode)) {
-          final logs = await session.getOutput();
-          throw Exception(logs ?? 'Video export में समस्या आई।');
-        }
       }
+
+      if (!mounted) return;
+
+      setState(() => progressMessage = 'Exporting video...');
+
+      final completer = Completer<FFmpegSession>();
+
+      await FFmpegKit.executeAsync(
+        command,
+        (session) {
+          if (!completer.isCompleted) {
+            completer.complete(session);
+          }
+        },
+        null,
+        (statistics) {
+          if (!mounted || totalDuration <= 0) return;
+
+          final processed = statistics.getTime().toDouble();
+          final value =
+              (processed / totalDuration).clamp(0.01, 0.99).toDouble();
+
+          if (value > progress) {
+            setState(() {
+              progress = value;
+              progressMessage = 'Exporting video...';
+            });
+          }
+        },
+      );
+
+      final session = await completer.future;
+      final returnCode = await session.getReturnCode();
+
+      if (!ReturnCode.isSuccess(returnCode)) {
+        final logs = await session.getAllLogsAsString();
+        final fail = await session.getFailStackTrace();
+
+        throw Exception(
+          fail ?? logs ?? 'Video export में समस्या आई।',
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        progress = 0.99;
+        progressMessage = 'Saving to Gallery...';
+      });
 
       final result = await SaverGallery.saveFile(
         filePath: outputPath,
@@ -1021,7 +1172,23 @@ class _ExportScreenState extends State<ExportScreen> {
         albumPath: 'Prashi Toon Editor',
       );
 
+      if (shareAfter) {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(outputPath)],
+            text: 'Created with Prashi Toon Editor',
+          ),
+        );
+      }
+
       if (!mounted) return;
+
+      setState(() {
+        progress = 1.0;
+        exporting = false;
+        exportComplete = true;
+        progressMessage = 'Export Complete!';
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1033,18 +1200,110 @@ class _ExportScreenState extends State<ExportScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export असफल: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => exporting = false);
-      }
+      setState(() {
+        exporting = false;
+        exportError = e.toString();
+        progressMessage = 'Export failed';
+      });
     }
+  }
+
+  Widget buildProgressScreen() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  exportComplete
+                      ? Icons.check_circle
+                      : Icons.movie_creation_outlined,
+                  color: const Color(0xFF25D9E8),
+                  size: 70,
+                ),
+                const SizedBox(height: 30),
+                Text(
+                  exportError != null
+                      ? 'Export Failed'
+                      : exportComplete
+                          ? 'Export Complete!'
+                          : 'Exporting...',
+                  style: const TextStyle(fontSize: 30),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  progressMessage,
+                  style: const TextStyle(color: Colors.white60),
+                ),
+                const SizedBox(height: 35),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      height: 190,
+                      width: 190,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 9,
+                        backgroundColor: Colors.white12,
+                        valueColor: const AlwaysStoppedAnimation(
+                          Color(0xFF25D9E8),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${(progress * 100).toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                if (exportComplete || exportError != null)
+                  ElevatedButton(
+                    onPressed: () {
+                      if (exportComplete) {
+                        Navigator.pop(context);
+                      } else {
+                        setState(() {
+                          exportError = null;
+                          progress = 0.01;
+                          progressMessage = 'Ready to export';
+                        });
+                      }
+                    },
+                    child: Text(
+                      exportComplete ? 'Done' : 'Back to settings',
+                    ),
+                  ),
+                if (exportError != null) ...[
+                  const SizedBox(height: 15),
+                  Text(
+                    exportError!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (exporting || exportComplete || exportError != null) {
+      return buildProgressScreen();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF151515),
       body: SafeArea(
@@ -1062,9 +1321,7 @@ class _ExportScreenState extends State<ExportScreen> {
                   }),
                   const Spacer(),
                   GestureDetector(
-                    onTap: () {
-                      setState(() => showSettings = !showSettings);
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 13,
@@ -1074,22 +1331,18 @@ class _ExportScreenState extends State<ExportScreen> {
                         color: const Color(0xFF303030),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
-                          const Text('AI UHD'),
-                          const SizedBox(width: 4),
-                          Icon(
-                            showSettings
-                                ? Icons.arrow_drop_up
-                                : Icons.arrow_drop_down,
-                          ),
+                          Text('AI UHD'),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_drop_down),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: exporting ? null : startExport,
+                    onPressed: showExportOptions,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF20CDE0),
                       foregroundColor: Colors.black,
@@ -1101,16 +1354,7 @@ class _ExportScreenState extends State<ExportScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: exporting
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
-                            ),
-                          )
-                        : const Text('Export'),
+                    child: const Text('Export'),
                   ),
                 ],
               ),
@@ -1127,38 +1371,32 @@ class _ExportScreenState extends State<ExportScreen> {
                           gifQualities[index],
                           ['Standard', 'High', 'Ultra high'][index],
                           gifQualityIndex == index,
-                          () {
-                            setState(() => gifQualityIndex = index);
-                          },
+                          () => setState(() => gifQualityIndex = index),
                         );
                       }),
                     ),
                     const SizedBox(height: 25),
                     const Divider(color: Colors.white12),
-                    const SizedBox(height: 15),
                     const Center(
                       child: Text(
                         'GIF export quality selected',
                         style: TextStyle(color: Colors.white54),
                       ),
                     ),
-                  ] else if (showSettings) ...[
+                  ] else ...[
                     switchRow(
                       'AI Ultra HD',
                       'Sharpen video details.',
                       aiUltraHD,
-                      (value) => setState(() => aiUltraHD = value),
+                      (v) => setState(() => aiUltraHD = v),
                     ),
                     const SizedBox(height: 22),
                     sliderSection(
                       title: 'Resolution',
-                      subtitle:
-                          'High definition - the ultimate viewing experience',
+                      subtitle: 'High definition - ultimate viewing experience',
                       value: resolutionIndex,
                       labels: resolutions,
-                      onChanged: (value) {
-                        setState(() => resolutionIndex = value);
-                      },
+                      onChanged: (v) => setState(() => resolutionIndex = v),
                     ),
                     const SizedBox(height: 35),
                     sliderSection(
@@ -1166,16 +1404,14 @@ class _ExportScreenState extends State<ExportScreen> {
                       subtitle: 'Smoother playback',
                       value: frameRateIndex,
                       labels: frameRates,
-                      onChanged: (value) {
-                        setState(() => frameRateIndex = value);
-                      },
+                      onChanged: (v) => setState(() => frameRateIndex = v),
                     ),
                     const SizedBox(height: 30),
                     switchRow(
                       'Optical flow',
                       'Make video playback smoother.',
                       opticalFlow,
-                      (value) => setState(() => opticalFlow = value),
+                      (v) => setState(() => opticalFlow = v),
                     ),
                     const SizedBox(height: 25),
                     sliderSection(
@@ -1183,56 +1419,16 @@ class _ExportScreenState extends State<ExportScreen> {
                       subtitle: 'Recommended for this video (12)',
                       value: bitrateIndex,
                       labels: bitrates,
-                      onChanged: (value) {
-                        setState(() => bitrateIndex = value);
-                      },
+                      onChanged: (v) => setState(() => bitrateIndex = v),
                     ),
                     const SizedBox(height: 25),
                     const Divider(color: Colors.white12),
                     const SizedBox(height: 20),
                     const Center(
                       child: Text(
-                        'Estimated file size will appear here',
+                        'Estimated file size depends on video length and settings',
+                        textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white54),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    Container(
-                      height: 105,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF261044),
-                            Color(0xFF090909),
-                          ],
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          SizedBox(width: 18),
-                          Icon(
-                            Icons.settings_suggest,
-                            color: Color(0xFFB66CFF),
-                            size: 35,
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'More export settings',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white70,
-                            size: 17,
-                          ),
-                          SizedBox(width: 15),
-                        ],
                       ),
                     ),
                   ],
@@ -1245,3 +1441,4 @@ class _ExportScreenState extends State<ExportScreen> {
     );
   }
 }
+                                                                  
