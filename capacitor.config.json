@@ -1,0 +1,6 @@
+{
+  "appId": "com.affinity.base",
+  "appName": "Affinity Base",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
