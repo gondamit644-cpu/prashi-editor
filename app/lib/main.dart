@@ -1120,7 +1120,7 @@ class _ExportScreenState extends State<ExportScreen> {
 
       setState(() => progressMessage = 'Exporting video...');
 
-      final completer = Completer<FFmpegSession>();
+      final completer = Completer<dynamic>();
 
       await FFmpegKit.executeAsync(
         command,
