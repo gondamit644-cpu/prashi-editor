@@ -1,4 +1,10 @@
-import 'dart:io';
+        if (aiUltraHD) {
+          filters.add('unsharp=5:5:0.8:3:3:0.4');
+        }
+
+        if (opticalFlow) {
+          filters.add('minterpolate=fps=$fps');
+        }import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1082,16 +1088,16 @@ class _ExportScreenState extends State<ExportScreen> {
             'split[s0][s1];[s0]palettegen[p];'
             '[s1][p]paletteuse" '
             '-loop 0 ${quotePath(outputPath)}';
-      } else {
-        final heights = [480, 720, 1080, 1440, 2160];
-        final height = heights[resolutionIndex];
-        final fps = frameRates[frameRateIndex];
-        final bitrate = bitrates[bitrateIndex];
+                              } else {
+          final heights = [480, 720, 1080, 1440, 2160];
+          final height = heights[resolutionIndex];
+          final fps = frameRates[frameRateIndex];
+          final bitrate = bitrates[bitrateIndex];
 
-        "scale='if(gte(iw\\,ih)\\,$height\\,-2)':"
-"'if(gte(iw\\,ih)\\,-2\\,$height)':force_divisible_by=2",
-          'fps=$fps',
-        ];
+          final filters = <String>[
+            "scale='if(gte(iw,ih),$height,-2)':'if(gte(iw,ih),-2,$height)':force_divisible_by=2",
+            'fps=$fps',
+          ];
 
         if (aiUltraHD) {
           filters.add('unsharp=5:5:0.8:3:3:0.4');
