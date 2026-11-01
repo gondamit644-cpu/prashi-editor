@@ -1,8 +1,13 @@
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:saver_gallery/saver_gallery.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 
 const purple = Color(0xFF9B5CFF);
 const bg = Color(0xFF101014);
@@ -423,14 +428,15 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void showTool(String name) {
     if (name == 'Export') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => ExportScreen(videoPath: widget.videoPath),
-    ),
-  );
-  return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ExportScreen(videoPath: widget.videoPath),
+        ),
+      );
+      return;
     }
+
     if (name == 'Edit') {
       showModalBottomSheet(
         context: context,
@@ -468,33 +474,33 @@ class _EditorScreenState extends State<EditorScreen> {
         backgroundColor: bg,
         title: const Text('Editing Studio'),
         actions: [
-  TextButton.icon(
-    onPressed: showRatioOptions,
-    icon: const Icon(Icons.aspect_ratio, color: purple),
-    label: const Text(
-      'Ratio',
-      style: TextStyle(color: purple),
-    ),
-  ),
-  TextButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ExportScreen(
-            videoPath: widget.videoPath,
+          TextButton.icon(
+            onPressed: showRatioOptions,
+            icon: const Icon(Icons.aspect_ratio, color: purple),
+            label: const Text(
+              'Ratio',
+              style: TextStyle(color: purple),
+            ),
           ),
-        ),
-      );
-    },
-    child: const Text(
-      'Export',
-      style: TextStyle(color: purple),
-    ),
-  ),
-],
-),
-body: Column(
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ExportScreen(
+                    videoPath: widget.videoPath,
+                  ),
+                ),
+              );
+            },
+            child: const Text(
+              'Export',
+              style: TextStyle(color: purple),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
         children: [
           Expanded(
             child: Center(
@@ -722,6 +728,7 @@ class ToolInfo extends StatelessWidget {
     );
   }
 }
+
 class ExportScreen extends StatefulWidget {
   final String videoPath;
 
@@ -738,13 +745,13 @@ class _ExportScreenState extends State<ExportScreen> {
   bool isGif = false;
   bool aiUltraHD = false;
   bool opticalFlow = false;
+  bool showSettings = true;
+  bool exporting = false;
 
   int resolutionIndex = 2;
   int frameRateIndex = 2;
   int bitrateIndex = 1;
   int gifQualityIndex = 0;
-
-  String exportMode = 'AI UHD';
 
   final resolutions = ['480p', '720p', '1080p', '2K', '4K'];
   final frameRates = ['24', '25', '30', '50', '60'];
@@ -771,7 +778,9 @@ class _ExportScreenState extends State<ExportScreen> {
               height: 3,
               width: 43,
               decoration: BoxDecoration(
-                color: selected ? Color(0xFF25D9E8) : Colors.transparent,
+                color: selected
+                    ? const Color(0xFF25D9E8)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
@@ -790,7 +799,10 @@ class _ExportScreenState extends State<ExportScreen> {
           child: Text(
             subtitle,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Colors.white38, fontSize: 11),
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 11,
+            ),
           ),
         ),
       ],
@@ -825,7 +837,7 @@ class _ExportScreenState extends State<ExportScreen> {
           ),
           Switch(
             value: value,
-            activeThumbColor: Color(0xFF25D9E8),
+            activeThumbColor: const Color(0xFF25D9E8),
             onChanged: onChanged,
           ),
         ],
@@ -868,7 +880,10 @@ class _ExportScreenState extends State<ExportScreen> {
               const SizedBox(height: 12),
               Text(
                 description,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -916,14 +931,115 @@ class _ExportScreenState extends State<ExportScreen> {
     );
   }
 
-  void startExport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Export settings तैयार हैं। Video/GIF सेव करने की सुविधा अभी जोड़नी बाकी है।',
+  String quotePath(String path) {
+    return '"${path.replaceAll('"', '\\"')}"';
+  }
+
+  Future<void> startExport() async {
+    if (exporting) return;
+
+    setState(() => exporting = true);
+
+    try {
+      final directory = await getTemporaryDirectory();
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+
+      final String outputPath;
+
+      if (isGif) {
+        outputPath = '${directory.path}/prashi_$stamp.gif';
+
+        final gifSizes = [240, 320, 640];
+        final size = gifSizes[gifQualityIndex];
+
+        final command =
+            '-y -i ${quotePath(widget.videoPath)} '
+            '-vf "fps=15,scale=$size:-1:flags=lanczos,'
+            'split[s0][s1];[s0]palettegen[p];'
+            '[s1][p]paletteuse" '
+            '-loop 0 ${quotePath(outputPath)}';
+
+        final session = await FFmpegKit.execute(command);
+        final returnCode = await session.getReturnCode();
+
+        if (!ReturnCode.isSuccess(returnCode)) {
+          final logs = await session.getOutput();
+          throw Exception(logs ?? 'GIF बनाने में समस्या आई।');
+        }
+      } else {
+        outputPath = '${directory.path}/prashi_$stamp.mp4';
+
+        final heights = [480, 720, 1080, 1440, 2160];
+        final height = heights[resolutionIndex];
+        final fps = frameRates[frameRateIndex];
+        final bitrate = bitrates[bitrateIndex];
+
+        final filters = <String>[];
+
+        filters.add(
+          "scale='if(gte(iw,ih),$height,-2)':"
+          "'if(gte(iw,ih),-2,$height)':"
+          'force_divisible_by=2',
+        );
+
+        filters.add('fps=$fps');
+
+        if (aiUltraHD) {
+          filters.add('unsharp=5:5:0.8:3:3:0.4');
+        }
+
+        if (opticalFlow) {
+          filters.add('minterpolate=fps=$fps');
+        }
+
+        final command =
+            '-y -i ${quotePath(widget.videoPath)} '
+            '-vf "${filters.join(',')}" '
+            '-c:v libx264 -preset ultrafast '
+            '-b:v ${bitrate}M '
+            '-maxrate ${bitrate}M '
+            '-bufsize ${bitrate * 2}M '
+            '-pix_fmt yuv420p '
+            '-c:a aac -b:a 192k '
+            '-movflags +faststart '
+            '${quotePath(outputPath)}';
+
+        final session = await FFmpegKit.execute(command);
+        final returnCode = await session.getReturnCode();
+
+        if (!ReturnCode.isSuccess(returnCode)) {
+          final logs = await session.getOutput();
+          throw Exception(logs ?? 'Video export में समस्या आई।');
+        }
+      }
+
+      final result = await SaverGallery.saveFile(
+        filePath: outputPath,
+        fileName: isGif ? 'Prashi_$stamp.gif' : 'Prashi_$stamp.mp4',
+        skipIfExists: false,
+        albumPath: 'Prashi Toon Editor',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gallery में सेव हो गया: ${result.savedUri ?? "Success"}',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export असफल: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => exporting = false);
+      }
+    }
   }
 
   @override
@@ -944,22 +1060,10 @@ class _ExportScreenState extends State<ExportScreen> {
                     setState(() => isGif = true);
                   }),
                   const Spacer(),
-                  PopupMenuButton<String>(
-                    color: const Color(0xFF303030),
-                    initialValue: exportMode,
-                    onSelected: (value) {
-                      setState(() => exportMode = value);
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => showSettings = !showSettings);
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                        value: 'AI UHD',
-                        child: Text('AI UHD'),
-                      ),
-                      PopupMenuItem(
-                        value: 'Recommended',
-                        child: Text('Recommended'),
-                      ),
-                    ],
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 13,
@@ -971,15 +1075,20 @@ class _ExportScreenState extends State<ExportScreen> {
                       ),
                       child: Row(
                         children: [
-                          Text(exportMode),
-                          const Icon(Icons.arrow_drop_up),
+                          const Text('AI UHD'),
+                          const SizedBox(width: 4),
+                          Icon(
+                            showSettings
+                                ? Icons.arrow_drop_up
+                                : Icons.arrow_drop_down,
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: startExport,
+                    onPressed: exporting ? null : startExport,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF20CDE0),
                       foregroundColor: Colors.black,
@@ -991,7 +1100,16 @@ class _ExportScreenState extends State<ExportScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Export'),
+                    child: exporting
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Text('Export'),
                   ),
                 ],
               ),
@@ -1023,17 +1141,18 @@ class _ExportScreenState extends State<ExportScreen> {
                         style: TextStyle(color: Colors.white54),
                       ),
                     ),
-                  ] else ...[
+                  ] else if (showSettings) ...[
                     switchRow(
                       'AI Ultra HD',
-                      'Make your video clearer and smoother with AI enhancement and frame interpolation.',
+                      'Sharpen video details.',
                       aiUltraHD,
                       (value) => setState(() => aiUltraHD = value),
                     ),
                     const SizedBox(height: 22),
                     sliderSection(
                       title: 'Resolution',
-                      subtitle: 'High definition - the ultimate viewing experience',
+                      subtitle:
+                          'High definition - the ultimate viewing experience',
                       value: resolutionIndex,
                       labels: resolutions,
                       onChanged: (value) {
