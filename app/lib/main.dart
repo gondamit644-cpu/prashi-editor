@@ -963,7 +963,7 @@ class _ExportScreenState extends State<ExportScreen> {
         final returnCode = await session.getReturnCode();
 
         if (!ReturnCode.isSuccess(returnCode)) {
-          final logs = await session.getOutput();
+          final logs = await session.getAllLogsAsString();
           throw Exception(logs ?? 'GIF बनाने में समस्या आई।');
         }
       } else {
@@ -996,9 +996,10 @@ class _ExportScreenState extends State<ExportScreen> {
             '-y -i ${quotePath(widget.videoPath)} '
             '-vf "${filters.join(',')}" '
             '-c:v libx264 -preset ultrafast '
-            '-b:v ${bitrate}M '
-            '-maxrate ${bitrate}M '
-            '-bufsize ${bitrate * 2}M '
+'-threads 2 '
+'-b:v ${bitrate}M '
+'-maxrate ${bitrate}M '
+'-bufsize ${bitrate}M '
             '-pix_fmt yuv420p '
             '-c:a aac -b:a 192k '
             '-movflags +faststart '
