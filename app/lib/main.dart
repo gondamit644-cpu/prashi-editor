@@ -1,8 +1,7 @@
-        import 'dart:io';
+import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-
-
 import 'package:image_picker/image_picker.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -12,31 +11,36 @@ import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
-import 'dart:async';
-const purple = Color(0xFF9B5CFF);
-const bg = Color(0xFF101014);
-const panel = Color(0xFF1D1D25);
-const muted = Color(0xFF9999A8);
+
+const purple = Color(0xFF8B5CF6);
+const appBlack = Color(0xFF09090B);
+const appWhite = Color(0xFFFFFFFF);
+const softGrey = Color(0xFFF3F2F7);
+const muted = Color(0xFF777482);
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const PrashiApp());
+  runApp(const AmCutApp());
 }
 
-class PrashiApp extends StatelessWidget {
-  const PrashiApp({super.key});
+class AmCutApp extends StatelessWidget {
+  const AmCutApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Prashi Toon Editor',
+      title: 'AmCut',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: bg,
-        colorScheme: ColorScheme.dark(primary: purple),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: appWhite,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: purple,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
+        fontFamily: 'Roboto',
       ),
       home: const HomeScreen(),
     );
@@ -56,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> newProject() async {
     final picker = ImagePicker();
     final file = await picker.pickVideo(source: ImageSource.gallery);
-
     if (file == null || !mounted) return;
 
     Navigator.push(
@@ -67,227 +70,261 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget toolIcon(IconData icon, String label) {
+  void showComingSoon(String name) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$name feature will be added in a future update.')),
+    );
+  }
+
+  Widget sectionTitle(String title, {String? action, VoidCallback? onAction}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(
+          fontSize: 18, fontWeight: FontWeight.w800, color: appBlack,
+        )),
+        if (action != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(action, style: const TextStyle(color: purple)),
+          ),
+      ],
+    );
+  }
+
+  Widget toolTile(IconData icon, String label, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: newProject,
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap ?? () => showComingSoon(label),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            height: 54,
-            width: 54,
+            height: 58,
+            width: 58,
             decoration: BoxDecoration(
-              color: panel,
-              borderRadius: BorderRadius.circular(15),
+              color: const Color(0xFFF0EAFE),
+              borderRadius: BorderRadius.circular(17),
             ),
             child: Icon(icon, color: purple, size: 27),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 11)),
+          Text(label, textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: appBlack,
+              fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: bg,
-        title: const Text(
-          'Prashi Toon Editor',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings_outlined),
+  Widget homeBody() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 22),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: appBlack,
+            borderRadius: BorderRadius.circular(22),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF52259C), Color(0xFF24163E)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('MAKE EVERY MOMENT',
+                style: TextStyle(color: Colors.white70, letterSpacing: 2,
+                  fontSize: 10, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 9),
+              const Text('Create something\namazing.',
+                style: TextStyle(color: Colors.white, fontSize: 27,
+                  height: 1.12, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: newProject,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: purple, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13)),
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('New Project',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                borderRadius: BorderRadius.circular(22),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'CREATE YOUR STORY',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      letterSpacing: 2,
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Make Amazing Videos',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: newProject,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                    ),
-                    icon: const Icon(Icons.add),
-                    label: const Text('New Project'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 27),
-            const Text(
-              'Quick Tools',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                toolIcon(Icons.content_cut, 'Trim'),
-                toolIcon(Icons.speed, 'Speed'),
-                toolIcon(Icons.music_note, 'Music'),
-                toolIcon(Icons.text_fields, 'Text'),
-              ],
-            ),
-            const SizedBox(height: 25),
-            const Text(
-              'AI TOOLS',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.5,
-              children: const [
-                HomeTool(Icons.auto_awesome, 'AI Effects'),
-                HomeTool(Icons.closed_caption, 'Auto Captions'),
-                HomeTool(Icons.face_retouching_natural, 'Beauty'),
-                HomeTool(Icons.video_library, 'Video Templates'),
-              ],
-            ),
-            const SizedBox(height: 25),
-            const Text(
-              'Editing Studio',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: panel,
-                borderRadius: BorderRadius.circular(17),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.movie_creation_outlined,
-                    size: 38,
-                    color: purple,
-                  ),
-                  const SizedBox(width: 13),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Start Editing',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Choose a video from your Gallery',
-                          style: TextStyle(color: muted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: newProject,
-                    icon: const Icon(
-                      Icons.arrow_forward_ios,
-                      color: purple,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 25),
+        sectionTitle('Quick Tools'),
+        const SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            toolTile(Icons.content_cut, 'AutoCut'),
+            toolTile(Icons.closed_caption, 'AI Captions'),
+            toolTile(Icons.auto_awesome, 'AI Effects'),
+            toolTile(Icons.layers_outlined, 'Overlay'),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: panel,
-        indicatorColor: purple.withOpacity(0.25),
-        selectedIndex: selectedTab,
-        onDestinationSelected: (value) {
-          setState(() => selectedTab = value);
-          if (value == 1) newProject();
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+        const SizedBox(height: 24),
+        sectionTitle('AI Studio', action: 'See all',
+          onAction: () => showComingSoon('AI Studio')),
+        const SizedBox(height: 13),
+        GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 17,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.82,
+          children: [
+            toolTile(Icons.person_remove_alt_1, 'Remove BG'),
+            toolTile(Icons.video_library_outlined, 'Templates'),
+            toolTile(Icons.face_retouching_natural, 'Beauty'),
+            toolTile(Icons.hd_outlined, 'Enhance'),
+          ],
+        ),
+        const SizedBox(height: 23),
+        sectionTitle('Editing Studio'),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: newProject,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: softGrey,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE8E5EF)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 48, width: 48,
+                  decoration: BoxDecoration(
+                    color: purple, borderRadius: BorderRadius.circular(14)),
+                  child: const Icon(Icons.movie_creation_outlined,
+                    color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 13),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Start Editing',
+                        style: TextStyle(fontWeight: FontWeight.bold,
+                          color: appBlack, fontSize: 15)),
+                      SizedBox(height: 4),
+                      Text('Choose a video from your Gallery',
+                        style: TextStyle(color: muted, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 17, color: purple),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.video_library_outlined),
-            label: 'Projects',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.auto_awesome_outlined),
-            label: 'AI Tools',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Me',
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+          Widget simplePage(String title, String subtitle, IconData icon) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: purple, size: 54),
+          const SizedBox(height: 14),
+          Text(title, style: const TextStyle(fontSize: 21,
+            fontWeight: FontWeight.bold, color: appBlack)),
+          const SizedBox(height: 7),
+          Text(subtitle, textAlign: TextAlign.center,
+            style: const TextStyle(color: muted)),
+        ]),
       ),
     );
   }
-}
-
-class HomeTool extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const HomeTool(this.icon, this.title, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: panel,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: purple, size: 21),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(title, style: const TextStyle(fontSize: 12)),
+    final pages = [
+      homeBody(),
+      simplePage('Templates', 'Video templates will appear here.', Icons.video_library_outlined),
+      const SizedBox.shrink(),
+      simplePage('Projects', 'Your saved editing projects will appear here.', Icons.folder_open_outlined),
+      simplePage('Me', 'AmCut account and settings.', Icons.person_outline),
+    ];
+
+    return Scaffold(
+      backgroundColor: appWhite,
+      appBar: AppBar(
+        backgroundColor: appWhite,
+        surfaceTintColor: appWhite,
+        elevation: 0,
+        titleSpacing: 18,
+        title: const Row(children: [
+          Icon(Icons.movie_creation, color: purple, size: 27),
+          SizedBox(width: 9),
+          Text('AmCut', style: TextStyle(color: appBlack,
+            fontWeight: FontWeight.w900, letterSpacing: 0.3)),
+        ]),
+        actions: [
+          IconButton(
+            onPressed: () => showComingSoon('Notifications'),
+            icon: const Icon(Icons.notifications_none, color: appBlack),
           ),
+          IconButton(
+            onPressed: () => showComingSoon('Settings'),
+            icon: const Icon(Icons.settings_outlined, color: appBlack),
+          ),
+          const SizedBox(width: 5),
         ],
+      ),
+      body: SafeArea(child: pages[selectedTab]),
+      bottomNavigationBar: Container(
+        color: appBlack,
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 66,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(Icons.home_outlined, 'Home', 0),
+                _navItem(Icons.video_library_outlined, 'Templates', 1),
+                InkWell(
+                  onTap: newProject,
+                  child: Container(
+                    height: 48, width: 52,
+                    decoration: BoxDecoration(
+                      color: purple, borderRadius: BorderRadius.circular(15)),
+                    child: const Icon(Icons.add, color: Colors.white, size: 30),
+                  ),
+                ),
+                _navItem(Icons.folder_outlined, 'Projects', 3),
+                _navItem(Icons.person_outline, 'Me', 4),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, int index) {
+    final active = selectedTab == index;
+    return InkWell(
+      onTap: () => setState(() => selectedTab = index),
+      child: SizedBox(
+        width: 66,
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: active ? purple : Colors.white70, size: 22),
+          const SizedBox(height: 3),
+          Text(label, style: TextStyle(fontSize: 9,
+            color: active ? purple : Colors.white70,
+            fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+        ]),
       ),
     );
   }
@@ -295,7 +332,6 @@ class HomeTool extends StatelessWidget {
 
 class EditorScreen extends StatefulWidget {
   final String videoPath;
-
   const EditorScreen({super.key, required this.videoPath});
 
   @override
@@ -305,11 +341,9 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   late final Player player;
   late final VideoController videoController;
-
   bool loading = true;
-  int selectedTool = 0;
   String? errorMessage;
-
+  int selectedTool = 0;
   String selectedRatioName = 'Original';
   double? selectedRatio;
 
@@ -319,11 +353,8 @@ class _EditorScreenState extends State<EditorScreen> {
     {'name': '16:9', 'ratio': 16 / 9},
     {'name': '1:1', 'ratio': 1.0},
     {'name': '4:3', 'ratio': 4 / 3},
-    {'name': '5.8"', 'ratio': 5.8},
-    {'name': '128:27', 'ratio': 128 / 27},
     {'name': '2:1', 'ratio': 2.0},
     {'name': '2.35:1', 'ratio': 2.35},
-    {'name': '1.85:1', 'ratio': 1.85},
   ];
 
   final tools = const [
@@ -331,9 +362,9 @@ class _EditorScreenState extends State<EditorScreen> {
     ['Audio', Icons.music_note],
     ['Text', Icons.text_fields],
     ['Effects', Icons.auto_awesome],
-    ['Filters', Icons.filter],
     ['Overlay', Icons.layers],
     ['Captions', Icons.closed_caption],
+    ['Filters', Icons.filter],
     ['Export', Icons.download],
   ];
 
@@ -348,16 +379,10 @@ class _EditorScreenState extends State<EditorScreen> {
   Future<void> initializeVideo() async {
     try {
       await player.open(Media(widget.videoPath), play: false);
-
       if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        errorMessage = null;
-      });
+      setState(() { loading = false; errorMessage = null; });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
         loading = false;
         errorMessage = 'Video खुल नहीं पाया: $e';
@@ -374,95 +399,65 @@ class _EditorScreenState extends State<EditorScreen> {
   void showRatioOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: panel,
+      backgroundColor: appWhite,
       isScrollControlled: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Video Ratio',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: ratios.map((item) {
-                    final name = item['name'] as String;
-                    final isSelected = selectedRatioName == name;
-
-                    return ChoiceChip(
-                      label: Text(name),
-                      selected: isSelected,
-                      selectedColor: purple,
-                      backgroundColor: bg,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white70,
-                      ),
-                      onSelected: (selected) {
-                        if (!selected) return;
-
-                        setState(() {
-                          selectedRatioName = name;
-                          selectedRatio = item['ratio'] as double?;
-                        });
-
-                        Navigator.pop(sheetContext);
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 15),
-              ],
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Video Ratio', style: TextStyle(fontSize: 20,
+              fontWeight: FontWeight.bold, color: appBlack)),
+            const SizedBox(height: 15),
+            Wrap(spacing: 10, runSpacing: 10,
+              children: ratios.map((item) {
+                final name = item['name'] as String;
+                final isSelected = selectedRatioName == name;
+                return ChoiceChip(
+                  label: Text(name), selected: isSelected,
+                  selectedColor: purple.withOpacity(0.18),
+                  labelStyle: TextStyle(color: appBlack,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                  onSelected: (selected) {
+                    if (!selected) return;
+                    setState(() {
+                      selectedRatioName = name;
+                      selectedRatio = item['ratio'] as double?;
+                    });
+                    Navigator.pop(sheetContext);
+                  },
+                );
+              }).toList(),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 15),
+          ]),
+        ),
+      ),
     );
   }
-
-  void showTool(String name) {
+          void showTool(String name) {
     if (name == 'Export') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ExportScreen(videoPath: widget.videoPath),
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ExportScreen(videoPath: widget.videoPath)));
       return;
     }
 
-    if (name == 'Edit') {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => const ToolInfo(
-          title: 'Edit Tools',
-          items: ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
-        ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        backgroundColor: panel,
-        builder: (_) => ToolInfo(
-          title: name,
-          items: const [
-            'Choose a tool',
-            'More editing features will be added in future updates',
-          ],
-        ),
-      );
-    }
+    final Map<String, List<String>> details = {
+      'Edit': ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
+      'Audio': ['Add music', 'Sound effects', 'Voiceover'],
+      'Text': ['Add text', 'Text styles', 'Text animation'],
+      'Effects': ['Video effects', 'Body effects', 'Light effects'],
+      'Overlay': ['Add overlay', 'Picture in picture'],
+      'Captions': ['Auto captions', 'Caption styles'],
+      'Filters': ['Color filters', 'Adjust'],
+    };
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: appWhite,
+      builder: (_) => ToolInfo(title: name,
+        items: details[name] ?? ['Coming soon']),
+    );
   }
 
   @override
@@ -471,220 +466,166 @@ class _EditorScreenState extends State<EditorScreen> {
     super.dispose();
   }
 
+  Widget timelineTrack(IconData icon, String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(children: [
+        SizedBox(width: 68, child: Row(children: [
+          Icon(icon, size: 15, color: purple),
+          const SizedBox(width: 5),
+          Expanded(child: Text(title, style: const TextStyle(
+            color: appBlack, fontSize: 10, fontWeight: FontWeight.w600))),
+        ])),
+        Expanded(
+          child: Container(
+            height: 29,
+            decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(6)),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: title == 'Video'
+              ? const Text('Video clip', style: TextStyle(
+                  color: Colors.white, fontSize: 10))
+              : null,
+          ),
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: appWhite,
       appBar: AppBar(
-        backgroundColor: bg,
-        title: const Text('Editing Studio'),
+        backgroundColor: appBlack,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.close),
+        ),
+        title: const Text('AmCut Editor', style: TextStyle(
+          color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
-          TextButton.icon(
+          IconButton(
             onPressed: showRatioOptions,
             icon: const Icon(Icons.aspect_ratio, color: purple),
-            label: const Text(
-              'Ratio',
-              style: TextStyle(color: purple),
-            ),
+            tooltip: 'Ratio',
           ),
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ExportScreen(
-                    videoPath: widget.videoPath,
-                  ),
-                ),
-              );
-            },
-            child: const Text(
-              'Export',
-              style: TextStyle(color: purple),
-            ),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => ExportScreen(videoPath: widget.videoPath))),
+            child: const Text('Export', style: TextStyle(
+              color: purple, fontWeight: FontWeight.bold)),
           ),
+          const SizedBox(width: 6),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: Column(children: [
+        Expanded(
+          flex: 5,
+          child: Container(
+            width: double.infinity,
+            color: appBlack,
             child: Center(
               child: loading
-                  ? const CircularProgressIndicator()
-                  : errorMessage != null
-                      ? Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            errorMessage!,
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      : selectedRatio == null
-                          ? Video(
-                              controller: videoController,
-                              fit: BoxFit.contain,
-                            )
-                          : AspectRatio(
-                              aspectRatio: selectedRatio!,
-                              child: Video(
-                                controller: videoController,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                ? const CircularProgressIndicator(color: purple)
+                : errorMessage != null
+                  ? Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Text(errorMessage!, textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white)))
+                  : selectedRatio == null
+                    ? Video(controller: videoController, fit: BoxFit.contain)
+                    : AspectRatio(
+                        aspectRatio: selectedRatio!,
+                        child: Video(controller: videoController,
+                          fit: BoxFit.contain)),
             ),
           ),
-          if (!loading && errorMessage == null) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 5),
-              child: Text(
-                'Ratio: $selectedRatioName',
-                style: const TextStyle(
-                  color: purple,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            StreamBuilder<Duration>(
-              stream: player.stream.position,
-              initialData: Duration.zero,
-              builder: (context, positionSnapshot) {
-                final position = positionSnapshot.data ?? Duration.zero;
-
-                return StreamBuilder<Duration>(
-                  stream: player.stream.duration,
-                  initialData: Duration.zero,
-                  builder: (context, durationSnapshot) {
-                    final duration =
-                        durationSnapshot.data ?? Duration.zero;
-
-                    final maxValue =
-                        duration.inMilliseconds.toDouble();
-
-                    final currentValue = position.inMilliseconds
-                        .toDouble()
-                        .clamp(0.0, maxValue > 0 ? maxValue : 1.0)
-                        .toDouble();
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        children: [
-                          Text(
-                            timeText(position),
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          Expanded(
-                            child: Slider(
-                              value: currentValue,
-                              max: maxValue > 0 ? maxValue : 1.0,
-                              activeColor: purple,
-                              onChanged: duration.inMilliseconds > 0
-                                  ? (value) {
-                                      player.seek(
-                                        Duration(
-                                          milliseconds: value.round(),
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                            ),
-                          ),
-                          Text(
-                            timeText(duration),
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+        ),
+        Container(
+          color: appWhite,
+          padding: const EdgeInsets.fromLTRB(12, 5, 12, 3),
+          child: Row(children: [
             StreamBuilder<bool>(
               stream: player.stream.playing,
               initialData: false,
               builder: (context, snapshot) {
-                final isPlaying = snapshot.data ?? false;
-
+                final playing = snapshot.data ?? false;
                 return IconButton(
-                  iconSize: 45,
-                  color: purple,
-                  onPressed: () {
-                    if (isPlaying) {
-                      player.pause();
-                    } else {
-                      player.play();
-                    }
-                  },
-                  icon: Icon(
-                    isPlaying ? Icons.pause_circle : Icons.play_circle,
-                  ),
+                  onPressed: () => playing ? player.pause() : player.play(),
+                  icon: Icon(playing ? Icons.pause : Icons.play_arrow,
+                    color: purple, size: 28),
                 );
               },
             ),
-          ],
-          Container(
-            height: 85,
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: panel,
-              borderRadius: BorderRadius.circular(12),
+            const Spacer(),
+            Text('Ratio: $selectedRatioName',
+              style: const TextStyle(color: muted, fontSize: 11)),
+            IconButton(
+              onPressed: showRatioOptions,
+              icon: const Icon(Icons.fullscreen, color: appBlack),
             ),
-            child: const Row(
-              children: [
-                Icon(Icons.movie, color: purple),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Video Timeline',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ),
-                Icon(Icons.graphic_eq, color: muted),
-              ],
-            ),
+          ]),
+        ),
+        Container(
+          height: 174,
+          color: const Color(0xFFFAF9FC),
+          padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
+          child: Column(children: [
+            Row(children: [
+              const Text('Timeline', style: TextStyle(color: appBlack,
+                fontWeight: FontWeight.bold, fontSize: 13)),
+              const Spacer(),
+              StreamBuilder<Duration>(
+                stream: player.stream.position,
+                initialData: Duration.zero,
+                builder: (context, snapshot) => Text(
+                  timeText(snapshot.data ?? Duration.zero),
+                  style: const TextStyle(color: muted, fontSize: 11)),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            Expanded(child: Column(children: [
+              timelineTrack(Icons.movie, 'Video', purple),
+              timelineTrack(Icons.music_note, 'Audio', const Color(0xFFE6DDFC)),
+              timelineTrack(Icons.text_fields, 'Text', const Color(0xFFFFE7C2)),
+            ])),
+            const Text('Timeline tracks are a visual layout; clip editing is not active yet.',
+              style: TextStyle(color: muted, fontSize: 9)),
+          ]),
+        ),
+        Container(
+          height: 91,
+          color: appBlack,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: tools.length,
+            itemBuilder: (context, index) {
+              final item = tools[index];
+              final active = selectedTool == index;
+              return InkWell(
+                onTap: () {
+                  setState(() => selectedTool = index);
+                  showTool(item[0] as String);
+                },
+                child: SizedBox(width: 76, child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(item[1] as IconData,
+                      color: active ? purple : Colors.white70, size: 23),
+                    const SizedBox(height: 7),
+                    Text(item[0] as String, style: TextStyle(
+                      fontSize: 10, color: active ? purple : Colors.white70,
+                      fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+                  ],
+                )),
+              );
+            },
           ),
-          Container(
-            height: 105,
-            color: panel,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: tools.length,
-              itemBuilder: (context, index) {
-                final item = tools[index];
-                final active = selectedTool == index;
-
-                return InkWell(
-                  onTap: () {
-                    setState(() => selectedTool = index);
-                    showTool(item[0] as String);
-                  },
-                  child: SizedBox(
-                    width: 76,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          item[1] as IconData,
-                          color: active ? purple : Colors.white70,
-                        ),
-                        const SizedBox(height: 7),
-                        Text(
-                          item[0] as String,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: active ? purple : Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
@@ -692,48 +633,28 @@ class _EditorScreenState extends State<EditorScreen> {
 class ToolInfo extends StatelessWidget {
   final String title;
   final List<String> items;
-
-  const ToolInfo({
-    super.key,
-    required this.title,
-    required this.items,
-  });
+  const ToolInfo({super.key, required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                child: Text(
-                  item,
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-          ],
-        ),
+        child: Column(mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(fontSize: 20,
+            fontWeight: FontWeight.bold, color: appBlack)),
+          const SizedBox(height: 16),
+          ...items.map((item) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            child: Text(item, style: const TextStyle(color: appBlack)),
+          )),
+          const SizedBox(height: 15),
+        ]),
       ),
     );
   }
 }
-
-
 class ExportScreen extends StatefulWidget {
   final String videoPath;
 
@@ -790,9 +711,7 @@ class _ExportScreenState extends State<ExportScreen> {
               height: 3,
               width: 43,
               decoration: BoxDecoration(
-                color: selected
-                    ? const Color(0xFF25D9E8)
-                    : Colors.transparent,
+                color: selected ? purple : Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
@@ -849,7 +768,7 @@ class _ExportScreenState extends State<ExportScreen> {
           ),
           Switch(
             value: value,
-            activeThumbColor: const Color(0xFF25D9E8),
+            activeThumbColor: purple,
             onChanged: onChanged,
           ),
         ],
@@ -921,23 +840,21 @@ class _ExportScreenState extends State<ExportScreen> {
           min: 0,
           max: (labels.length - 1).toDouble(),
           divisions: labels.length - 1,
-          activeColor: const Color(0xFF25D9E8),
+          activeColor: purple,
           inactiveColor: Colors.white24,
           onChanged: (v) => onChanged(v.round()),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: labels
-              .map(
-                (label) => Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
-                  ),
-                ),
-              )
-              .toList(),
+          children: labels.map(
+            (label) => Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 12,
+              ),
+            ),
+          ).toList(),
         ),
       ],
     );
@@ -979,7 +896,10 @@ class _ExportScreenState extends State<ExportScreen> {
             Icon(icon, color: color, size: 30),
             const SizedBox(width: 17),
             Expanded(
-              child: Text(title, style: const TextStyle(fontSize: 16)),
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
             const Icon(Icons.arrow_forward_ios, size: 16),
           ],
@@ -1050,8 +970,7 @@ class _ExportScreenState extends State<ExportScreen> {
       },
     );
   }
-
-  Future<void> startExport({bool shareAfter = false}) async {
+          Future<void> startExport({bool shareAfter = false}) async {
     if (exporting) return;
 
     setState(() {
@@ -1067,8 +986,8 @@ class _ExportScreenState extends State<ExportScreen> {
       final stamp = DateTime.now().millisecondsSinceEpoch;
 
       final outputPath = isGif
-          ? '${directory.path}/prashi_$stamp.gif'
-          : '${directory.path}/prashi_$stamp.mp4';
+          ? '${directory.path}/amcut_$stamp.gif'
+          : '${directory.path}/amcut_$stamp.mp4';
 
       final totalDuration = await getVideoDuration();
 
@@ -1084,16 +1003,16 @@ class _ExportScreenState extends State<ExportScreen> {
             'split[s0][s1];[s0]palettegen[p];'
             '[s1][p]paletteuse" '
             '-loop 0 ${quotePath(outputPath)}';
-                              } else {
-          final heights = [480, 720, 1080, 1440, 2160];
-          final height = heights[resolutionIndex];
-          final fps = frameRates[frameRateIndex];
-          final bitrate = bitrates[bitrateIndex];
+      } else {
+        final heights = [480, 720, 1080, 1440, 2160];
+        final height = heights[resolutionIndex];
+        final fps = frameRates[frameRateIndex];
+        final bitrate = bitrates[bitrateIndex];
 
-          final filters = <String>[
-            "scale='if(gte(iw,ih),$height,-2)':'if(gte(iw,ih),-2,$height)':force_divisible_by=2",
-            'fps=$fps',
-          ];
+        final filters = <String>[
+          "scale='if(gte(iw,ih),$height,-2)':'if(gte(iw,ih),-2,$height)':force_divisible_by=2",
+          'fps=$fps',
+        ];
 
         if (aiUltraHD) {
           filters.add('unsharp=5:5:0.8:3:3:0.4');
@@ -1151,16 +1070,16 @@ class _ExportScreenState extends State<ExportScreen> {
       final returnCode = await session.getReturnCode();
 
       if (!ReturnCode.isSuccess(returnCode)) {
-  final logs = await session.getAllLogsAsString();
-  final fail = await session.getFailStackTrace();
+        final logs = await session.getAllLogsAsString();
+        final fail = await session.getFailStackTrace();
 
-  final details = (fail != null && fail.trim().isNotEmpty)
-      ? fail
-      : (logs != null && logs.trim().isNotEmpty)
-          ? logs
-          : 'FFmpeg export failed. Return code: $returnCode';
+        final details = (fail != null && fail.trim().isNotEmpty)
+            ? fail
+            : (logs != null && logs.trim().isNotEmpty)
+                ? logs
+                : 'FFmpeg export failed. Return code: $returnCode';
 
-  throw Exception(details);
+        throw Exception(details);
       }
 
       if (!mounted) return;
@@ -1172,16 +1091,16 @@ class _ExportScreenState extends State<ExportScreen> {
 
       final result = await SaverGallery.saveFile(
         filePath: outputPath,
-        fileName: isGif ? 'Prashi_$stamp.gif' : 'Prashi_$stamp.mp4',
+        fileName: isGif ? 'AmCut_$stamp.gif' : 'AmCut_$stamp.mp4',
         skipIfExists: false,
-        albumPath: 'Prashi Toon Editor',
+        albumPath: 'AmCut',
       );
 
       if (shareAfter) {
         await SharePlus.instance.share(
           ShareParams(
             files: [XFile(outputPath)],
-            text: 'Created with Prashi Toon Editor',
+            text: 'Created with AmCut',
           ),
         );
       }
@@ -1227,7 +1146,7 @@ class _ExportScreenState extends State<ExportScreen> {
                   exportComplete
                       ? Icons.check_circle
                       : Icons.movie_creation_outlined,
-                  color: const Color(0xFF25D9E8),
+                  color: purple,
                   size: 70,
                 ),
                 const SizedBox(height: 30),
@@ -1255,9 +1174,7 @@ class _ExportScreenState extends State<ExportScreen> {
                         value: progress,
                         strokeWidth: 9,
                         backgroundColor: Colors.white12,
-                        valueColor: const AlwaysStoppedAnimation(
-                          Color(0xFF25D9E8),
-                        ),
+                        valueColor: const AlwaysStoppedAnimation(purple),
                       ),
                     ),
                     Text(
@@ -1349,7 +1266,7 @@ class _ExportScreenState extends State<ExportScreen> {
                   ElevatedButton(
                     onPressed: showExportOptions,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF20CDE0),
+                      backgroundColor: purple,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 15,
@@ -1446,4 +1363,3 @@ class _ExportScreenState extends State<ExportScreen> {
     );
   }
 }
-                                                                  
