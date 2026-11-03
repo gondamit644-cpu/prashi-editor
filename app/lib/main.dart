@@ -1151,12 +1151,16 @@ class _ExportScreenState extends State<ExportScreen> {
       final returnCode = await session.getReturnCode();
 
       if (!ReturnCode.isSuccess(returnCode)) {
-        final logs = await session.getAllLogsAsString();
-        final fail = await session.getFailStackTrace();
+  final logs = await session.getAllLogsAsString();
+  final fail = await session.getFailStackTrace();
 
-        throw Exception(
-          fail ?? logs ?? 'Video export में समस्या आई।',
-        );
+  final details = (fail != null && fail.trim().isNotEmpty)
+      ? fail
+      : (logs != null && logs.trim().isNotEmpty)
+          ? logs
+          : 'FFmpeg export failed. Return code: $returnCode';
+
+  throw Exception(details);
       }
 
       if (!mounted) return;
