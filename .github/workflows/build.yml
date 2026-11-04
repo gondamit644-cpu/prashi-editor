@@ -1,4 +1,4 @@
-name: Build Prashi Toon Editor APK
+name: Build AmCut APK
 
 on:
   push:
@@ -25,22 +25,38 @@ jobs:
           channel: stable
 
       - name: Save App Code
-        run: cp app/lib/main.dart /tmp/prashi_main.dart
+        run: cp app/lib/main.dart /tmp/amcut_main.dart
 
-      - name: Create Flutter Project
-        run: flutter create app --project-name prashi_toon_editor --platforms=android
+      - name: Create Flutter Android Project
+        run: flutter create --project-name amcut --platforms=android --overwrite app
+      - name: Restore App Code and Icon
+        run: |
+          cp /tmp/amcut_main.dart app/lib/main.dart
+          mkdir -p app/assets
+          test -f app/assets/amcut_icon.png
+          test -f app/flutter_launcher_icons.yaml
 
-      - name: Restore App Code
-        run: cp /tmp/prashi_main.dart app/lib/main.dart
-      - name: Install Video Packages
-        run: flutter pub add image_picker video_player media_kit media_kit_video media_kit_libs_video ffmpeg_kit_flutter_new saver_gallery path_provider share_plus
+      - name: Set Android App Name
         working-directory: app
+        run: |
+          sed -i 's/android:label="[^"]*"/android:label="AmCut"/' android/app/src/main/AndroidManifest.xml
+
+      - name: Install App Packages
+        working-directory: app
+        run: |
+          flutter pub add image_picker video_player media_kit media_kit_video media_kit_libs_video ffmpeg_kit_flutter_new saver_gallery path_provider share_plus
+          flutter pub add --dev flutter_launcher_icons
+
+      - name: Generate AmCut Launcher Icons
+        working-directory: app
+        run: dart run flutter_launcher_icons -f flutter_launcher_icons.yaml
+
       - name: Build APK
-        run: flutter build apk --release
         working-directory: app
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Prashi-Toon-Editor-APK
+          name: AmCut-APK
           path: app/build/app/outputs/flutter-apk/app-release.apk
