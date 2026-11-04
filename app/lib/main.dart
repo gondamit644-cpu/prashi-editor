@@ -816,36 +816,37 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Container(
                 width: double.infinity,
                 color: Colors.black,
-                child: Center(
-                  child: loading
-                      ? const CircularProgressIndicator(
-                          color: Color(0xFF00C8E8),
-                        )
-                      : errorMessage != null
-                          ? Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Text(
-                                errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            )
-                          : selectedRatio == null
-                              Video(
-  controller: videoController,
-  fit: BoxFit.contain,
-  controls: NoVideoControls,
-)
-                              : AspectRatio(
-                                  aspectRatio: selectedRatio!,
-                                  child: Video(
-  controller: videoController,
-  fit: BoxFit.contain,
-  controls: NoVideoControls,
-),
-                                ),
-                ),
+                
+child: Center(
+  child: loading
+      ? const CircularProgressIndicator(
+          color: Color(0xFF00C8E8),
+        )
+      : errorMessage != null
+          ? Padding(
+              padding: const EdgeInsets.all(18),
+              child: Text(
+                errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white),
               ),
+            )
+          : selectedRatio == null
+              ? Video(
+                  controller: videoController,
+                  fit: BoxFit.contain,
+                  controls: NoVideoControls,
+                )
+              : AspectRatio(
+                  aspectRatio: selectedRatio!,
+                  child: Video(
+                    controller: videoController,
+                    fit: BoxFit.contain,
+                    controls: NoVideoControls,
+                  ),
+                ),
+),
+
             ),
 
             // Playback controls
