@@ -831,69 +831,107 @@ class _EditorScreenState extends State<EditorScreen> {
                               ),
                             )
                           : selectedRatio == null
-                              ? Video(
-                                  controller: videoController,
-                                  fit: BoxFit.contain,
-                                )
+                              Video(
+  controller: videoController,
+  fit: BoxFit.contain,
+  controls: NoVideoControls,
+)
                               : AspectRatio(
                                   aspectRatio: selectedRatio!,
                                   child: Video(
-                                    controller: videoController,
-                                    fit: BoxFit.contain,
-                                  ),
+  controller: videoController,
+  fit: BoxFit.contain,
+  controls: NoVideoControls,
+),
                                 ),
                 ),
               ),
             ),
 
             // Playback controls
-            Container(
-              height: 48,
-              color: const Color(0xFF171717),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  StreamBuilder<bool>(
-                    stream: player.stream.playing,
-                    initialData: false,
-                    builder: (context, snapshot) {
-                      final playing = snapshot.data ?? false;
-                      return IconButton(
-                        onPressed: () {
-                          if (playing) {
-                            player.pause();
-                          } else {
-                            player.play();
-                          }
-                        },
-                        icon: Icon(
-                          playing ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 27,
-                        ),
-                      );
-                    },
-                  ),
-                  const Spacer(),
-                  Text(
-                    selectedRatioName,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: showRatioOptions,
-                    icon: const Icon(
-                      Icons.aspect_ratio,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+Container(
+  height: 48,
+  color: const Color(0xFF171717),
+  padding: const EdgeInsets.symmetric(horizontal: 10),
+  child: Row(
+    children: [
+      const SizedBox(width: 65),
 
+      // Center Play/Pause button
+      Expanded(
+        child: Center(
+          child: StreamBuilder<bool>(
+            stream: player.stream.playing,
+            initialData: false,
+            builder: (context, snapshot) {
+              final playing = snapshot.data ?? false;
+
+              return GestureDetector(
+                onTap: () {
+                  if (playing) {
+                    player.pause();
+                  } else {
+                    player.play();
+                  }
+                },
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF3030),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    playing ? Icons.pause : Icons.play_arrow,
+                    color: Colors.black,
+                    size: 23,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+
+      // Aspect Ratio button
+      Container(
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: const Color(0xFF777777),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: TextButton(
+          onPressed: showRatioOptions,
+          style: TextButton.styleFrom(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 9),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            selectedRatioName == 'Original'
+                ? 'Original'
+                : selectedRatioName,
+            style: const TextStyle(fontSize: 11),
+          ),
+        ),
+      ),
+
+      const SizedBox(width: 8),
+
+      IconButton(
+        onPressed: showRatioOptions,
+        icon: const Icon(
+          Icons.crop_free,
+          color: Colors.white,
+          size: 21,
+        ),
+      ),
+    ],
+  ),
+),
             // Timeline
             videoTimeline(),
 
