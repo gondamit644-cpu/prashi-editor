@@ -332,6 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class EditorScreen extends StatefulWidget {
   final String videoPath;
+
   const EditorScreen({super.key, required this.videoPath});
 
   @override
@@ -341,9 +342,11 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   late final Player player;
   late final VideoController videoController;
+
   bool loading = true;
   String? errorMessage;
   int selectedTool = 0;
+
   String selectedRatioName = 'Original';
   double? selectedRatio;
 
@@ -354,18 +357,17 @@ class _EditorScreenState extends State<EditorScreen> {
     {'name': '1:1', 'ratio': 1.0},
     {'name': '4:3', 'ratio': 4 / 3},
     {'name': '2:1', 'ratio': 2.0},
-    {'name': '2.35:1', 'ratio': 2.35},
   ];
 
   final tools = const [
-    ['Edit', Icons.tune],
+    ['Edit', Icons.content_cut],
     ['Audio', Icons.music_note],
     ['Text', Icons.text_fields],
     ['Effects', Icons.auto_awesome],
     ['Overlay', Icons.layers],
     ['Captions', Icons.closed_caption],
-    ['Filters', Icons.filter],
-    ['Export', Icons.download],
+    ['Filters', Icons.tune],
+    ['Export', Icons.file_upload],
   ];
 
   @override
@@ -380,7 +382,10 @@ class _EditorScreenState extends State<EditorScreen> {
     try {
       await player.open(Media(widget.videoPath), play: false);
       if (!mounted) return;
-      setState(() { loading = false; errorMessage = null; });
+      setState(() {
+        loading = false;
+        errorMessage = null;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -391,58 +396,85 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   String timeText(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF303030),
+      ),
+    );
   }
 
   void showRatioOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: appWhite,
-      isScrollControlled: true,
+      backgroundColor: const Color(0xFF202020),
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(18),
-          child: Column(mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Video Ratio', style: TextStyle(fontSize: 20,
-              fontWeight: FontWeight.bold, color: appBlack)),
-            const SizedBox(height: 15),
-            Wrap(spacing: 10, runSpacing: 10,
-              children: ratios.map((item) {
-                final name = item['name'] as String;
-                final isSelected = selectedRatioName == name;
-                return ChoiceChip(
-                  label: Text(name), selected: isSelected,
-                  selectedColor: purple.withOpacity(0.18),
-                  labelStyle: TextStyle(color: appBlack,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-                  onSelected: (selected) {
-                    if (!selected) return;
-                    setState(() {
-                      selectedRatioName = name;
-                      selectedRatio = item['ratio'] as double?;
-                    });
-                    Navigator.pop(sheetContext);
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 15),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Video Ratio',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: ratios.map((item) {
+                  final name = item['name'] as String;
+                  final selected = selectedRatioName == name;
+
+                  return ChoiceChip(
+                    label: Text(name),
+                    selected: selected,
+                    selectedColor: const Color(0xFF00C8E8),
+                    backgroundColor: const Color(0xFF383838),
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.black : Colors.white,
+                    ),
+                    onSelected: (value) {
+                      if (!value) return;
+                      setState(() {
+                        selectedRatioName = name;
+                        selectedRatio = item['ratio'] as double?;
+                      });
+                      Navigator.pop(sheetContext);
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-          void showTool(String name) {
+
+  void showTool(String name) {
     if (name == 'Export') {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => ExportScreen(videoPath: widget.videoPath)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ExportScreen(videoPath: widget.videoPath),
+        ),
+      );
       return;
     }
 
-    final Map<String, List<String>> details = {
+    final details = <String, List<String>>{
       'Edit': ['Trim', 'Split', 'Crop', 'Rotate', 'Speed', 'Reverse'],
       'Audio': ['Add music', 'Sound effects', 'Voiceover'],
       'Text': ['Add text', 'Text styles', 'Text animation'],
@@ -454,9 +486,255 @@ class _EditorScreenState extends State<EditorScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: appWhite,
-      builder: (_) => ToolInfo(title: name,
-        items: details[name] ?? ['Coming soon']),
+      backgroundColor: const Color(0xFF202020),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 15),
+              ...(details[name] ?? ['Coming soon']).map(
+                (item) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.circle,
+                    size: 8,
+                    color: Color(0xFF00C8E8),
+                  ),
+                  title: Text(
+                    item,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showMessage('$item अभी उपलब्ध नहीं है।');
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget timelineTrack({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required String label,
+    required VoidCallback onAdd,
+  }) {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 75,
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white70, size: 16),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 34,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onAdd,
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 30,
+                    minHeight: 35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget videoTimeline() {
+    return Container(
+      height: 205,
+      color: const Color(0xFF171717),
+      padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Timeline',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              StreamBuilder<Duration>(
+                stream: player.stream.position,
+                initialData: Duration.zero,
+                builder: (context, snapshot) {
+                  return Text(
+                    timeText(snapshot.data ?? Duration.zero),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  );
+                },
+              ),
+              const Text(
+                ' / ',
+                style: TextStyle(color: Colors.white54),
+              ),
+              StreamBuilder<Duration>(
+                stream: player.stream.duration,
+                initialData: Duration.zero,
+                builder: (context, snapshot) {
+                  return Text(
+                    timeText(snapshot.data ?? Duration.zero),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+
+          // Video clip strip
+          SizedBox(
+            height: 52,
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 75,
+                  child: Row(
+                    children: [
+                      Icon(Icons.movie, color: Colors.white70, size: 16),
+                      SizedBox(width: 5),
+                      Text(
+                        'Video',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF353535),
+                      border: Border.all(
+                        color: const Color(0xFF00C8E8),
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Row(
+                        children: List.generate(
+                          7,
+                          (index) => Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: index.isEven
+                                    ? const Color(0xFF555555)
+                                    : const Color(0xFF414141),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white24,
+                                size: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          timelineTrack(
+            icon: Icons.music_note,
+            title: 'Audio',
+            color: const Color(0xFF286C58),
+            label: ' + Add audio',
+            onAdd: () => showTool('Audio'),
+          ),
+          timelineTrack(
+            icon: Icons.text_fields,
+            title: 'Text',
+            color: const Color(0xFF66512D),
+            label: ' + Add text',
+            onAdd: () => showTool('Text'),
+          ),
+          const Spacer(),
+          const Text(
+            'Timeline editing controls will be added separately.',
+            style: TextStyle(color: Colors.white38, fontSize: 9),
+          ),
+        ],
+      ),
     );
   }
 
@@ -466,170 +744,213 @@ class _EditorScreenState extends State<EditorScreen> {
     super.dispose();
   }
 
-  Widget timelineTrack(IconData icon, String title, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(children: [
-        SizedBox(width: 68, child: Row(children: [
-          Icon(icon, size: 15, color: purple),
-          const SizedBox(width: 5),
-          Expanded(child: Text(title, style: const TextStyle(
-            color: appBlack, fontSize: 10, fontWeight: FontWeight.w600))),
-        ])),
-        Expanded(
-          child: Container(
-            height: 29,
-            decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(6)),
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: title == 'Video'
-              ? const Text('Video clip', style: TextStyle(
-                  color: Colors.white, fontSize: 10))
-              : null,
-          ),
-        ),
-      ]),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: appWhite,
-      appBar: AppBar(
-        backgroundColor: appBlack,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close),
-        ),
-        title: const Text('AmCut Editor', style: TextStyle(
-          color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
-        actions: [
-          IconButton(
-            onPressed: showRatioOptions,
-            icon: const Icon(Icons.aspect_ratio, color: purple),
-            tooltip: 'Ratio',
-          ),
-          TextButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(
-              builder: (_) => ExportScreen(videoPath: widget.videoPath))),
-            child: const Text('Export', style: TextStyle(
-              color: purple, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 6),
-        ],
-      ),
-      body: Column(children: [
-        Expanded(
-          flex: 5,
-          child: Container(
-            width: double.infinity,
-            color: appBlack,
-            child: Center(
-              child: loading
-                ? const CircularProgressIndicator(color: purple)
-                : errorMessage != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Text(errorMessage!, textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white)))
-                  : selectedRatio == null
-                    ? Video(controller: videoController, fit: BoxFit.contain)
-                    : AspectRatio(
-                        aspectRatio: selectedRatio!,
-                        child: Video(controller: videoController,
-                          fit: BoxFit.contain)),
-            ),
-          ),
-        ),
-        Container(
-          color: appWhite,
-          padding: const EdgeInsets.fromLTRB(12, 5, 12, 3),
-          child: Row(children: [
-            StreamBuilder<bool>(
-              stream: player.stream.playing,
-              initialData: false,
-              builder: (context, snapshot) {
-                final playing = snapshot.data ?? false;
-                return IconButton(
-                  onPressed: () => playing ? player.pause() : player.play(),
-                  icon: Icon(playing ? Icons.pause : Icons.play_arrow,
-                    color: purple, size: 28),
-                );
-              },
-            ),
-            const Spacer(),
-            Text('Ratio: $selectedRatioName',
-              style: const TextStyle(color: muted, fontSize: 11)),
-            IconButton(
-              onPressed: showRatioOptions,
-              icon: const Icon(Icons.fullscreen, color: appBlack),
-            ),
-          ]),
-        ),
-        Container(
-          height: 174,
-          color: const Color(0xFFFAF9FC),
-          padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
-          child: Column(children: [
-            Row(children: [
-              const Text('Timeline', style: TextStyle(color: appBlack,
-                fontWeight: FontWeight.bold, fontSize: 13)),
-              const Spacer(),
-              StreamBuilder<Duration>(
-                stream: player.stream.position,
-                initialData: Duration.zero,
-                builder: (context, snapshot) => Text(
-                  timeText(snapshot.data ?? Duration.zero),
-                  style: const TextStyle(color: muted, fontSize: 11)),
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top toolbar
+            Container(
+              height: 48,
+              color: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => showMessage('Search अभी उपलब्ध नहीं है।'),
+                    icon: const Icon(Icons.search, color: Colors.white),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => showMessage('AI UHD अभी उपलब्ध नहीं है।'),
+                    icon: const Icon(
+                      Icons.hd,
+                      color: Colors.white,
+                      size: 19,
+                    ),
+                    label: const Text(
+                      'AI UHD',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ExportScreen(
+                            videoPath: widget.videoPath,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00C8E8),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      minimumSize: const Size(0, 34),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                    ),
+                    child: const Text(
+                      'Export',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                ],
               ),
-            ]),
-            const SizedBox(height: 6),
-            Expanded(child: Column(children: [
-              timelineTrack(Icons.movie, 'Video', purple),
-              timelineTrack(Icons.music_note, 'Audio', const Color(0xFFE6DDFC)),
-              timelineTrack(Icons.text_fields, 'Text', const Color(0xFFFFE7C2)),
-            ])),
-            const Text('Timeline tracks are a visual layout; clip editing is not active yet.',
-              style: TextStyle(color: muted, fontSize: 9)),
-          ]),
-        ),
-        Container(
-          height: 91,
-          color: appBlack,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: tools.length,
-            itemBuilder: (context, index) {
-              final item = tools[index];
-              final active = selectedTool == index;
-              return InkWell(
-                onTap: () {
-                  setState(() => selectedTool = index);
-                  showTool(item[0] as String);
+            ),
+
+            // Video preview
+            Expanded(
+              flex: 5,
+              child: Container(
+                width: double.infinity,
+                color: Colors.black,
+                child: Center(
+                  child: loading
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFF00C8E8),
+                        )
+                      : errorMessage != null
+                          ? Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Text(
+                                errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            )
+                          : selectedRatio == null
+                              ? Video(
+                                  controller: videoController,
+                                  fit: BoxFit.contain,
+                                )
+                              : AspectRatio(
+                                  aspectRatio: selectedRatio!,
+                                  child: Video(
+                                    controller: videoController,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                ),
+              ),
+            ),
+
+            // Playback controls
+            Container(
+              height: 48,
+              color: const Color(0xFF171717),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                children: [
+                  StreamBuilder<bool>(
+                    stream: player.stream.playing,
+                    initialData: false,
+                    builder: (context, snapshot) {
+                      final playing = snapshot.data ?? false;
+                      return IconButton(
+                        onPressed: () {
+                          if (playing) {
+                            player.pause();
+                          } else {
+                            player.play();
+                          }
+                        },
+                        icon: Icon(
+                          playing ? Icons.pause : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 27,
+                        ),
+                      );
+                    },
+                  ),
+                  const Spacer(),
+                  Text(
+                    selectedRatioName,
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: showRatioOptions,
+                    icon: const Icon(
+                      Icons.aspect_ratio,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Timeline
+            videoTimeline(),
+
+            // Bottom editing toolbar
+            Container(
+              height: 82,
+              color: Colors.black,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: tools.length,
+                itemBuilder: (context, index) {
+                  final item = tools[index];
+                  final active = selectedTool == index;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() => selectedTool = index);
+                      showTool(item[0] as String);
+                    },
+                    child: SizedBox(
+                      width: 76,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            item[1] as IconData,
+                            color: active
+                                ? const Color(0xFF00C8E8)
+                                : Colors.white,
+                            size: 23,
+                          ),
+                          const SizedBox(height: 7),
+                          Text(
+                            item[0] as String,
+                            style: TextStyle(
+                              color: active
+                                  ? const Color(0xFF00C8E8)
+                                  : Colors.white70,
+                              fontSize: 10,
+                              fontWeight: active
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 },
-                child: SizedBox(width: 76, child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(item[1] as IconData,
-                      color: active ? purple : Colors.white70, size: 23),
-                    const SizedBox(height: 7),
-                    Text(item[0] as String, style: TextStyle(
-                      fontSize: 10, color: active ? purple : Colors.white70,
-                      fontWeight: active ? FontWeight.bold : FontWeight.normal)),
-                  ],
-                )),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-      ]),
+      ),
     );
   }
 }
-
 class ToolInfo extends StatelessWidget {
   final String title;
   final List<String> items;
