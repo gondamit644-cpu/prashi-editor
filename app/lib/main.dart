@@ -807,9 +807,7 @@ class _EditorScreenState extends State<EditorScreen> {
               flex: 5,
               child: Container(
                 width: double.infinity,
-                color: selectedRatio == null
-    ? Colors.black
-    : const Color(0xFF171717),
+                color: const Color(0xFF171717),
                 child: Center(
   child: loading
       ? const CircularProgressIndicator(
