@@ -811,7 +811,7 @@ Offset _startOffset = Offset.zero;
               flex: 5,
               child: Container(
                 width: double.infinity,
-                selectedRatio == null
+                color: selectedRatio == null
               ? Colors.black
                 : const Color(0xFF171717),
                 child: Center(
