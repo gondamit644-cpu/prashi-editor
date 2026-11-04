@@ -816,8 +816,7 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Container(
                 width: double.infinity,
                 color: Colors.black,
-                
-child: Center(
+                child: Center(
   child: loading
       ? const CircularProgressIndicator(
           color: Color(0xFF00C8E8),
@@ -845,11 +844,9 @@ child: Center(
                     controls: NoVideoControls,
                   ),
                 ),
-),
-
+              ),
             ),
-
-            // Playback controls
+ // Playback controls
 Container(
   height: 48,
   color: const Color(0xFF171717),
