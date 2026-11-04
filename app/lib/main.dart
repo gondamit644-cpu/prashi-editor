@@ -609,15 +609,7 @@ class _EditorScreenState extends State<EditorScreen> {
         children: [
           Row(
             children: [
-              const Text(
-                'Timeline',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
+              
               StreamBuilder<Duration>(
                 stream: player.stream.position,
                 initialData: Duration.zero,
@@ -854,7 +846,7 @@ Container(
   padding: const EdgeInsets.symmetric(horizontal: 10),
   child: Row(
     children: [
-      const SizedBox(width: 65),
+      const SizedBox(width: 56),
 
       // Center Play/Pause button
       Expanded(
@@ -892,42 +884,35 @@ Container(
         ),
       ),
 
-      // Aspect Ratio button
-      Container(
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 9),
-        decoration: BoxDecoration(
-          color: const Color(0xFF777777),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: TextButton(
-          onPressed: showRatioOptions,
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            selectedRatioName == 'Original'
-                ? 'Original'
-                : selectedRatioName,
-            style: const TextStyle(fontSize: 11),
-          ),
-        ),
-      ),
-
       const SizedBox(width: 8),
 
-      IconButton(
+      Container(
+  width: 38,
+  height: 34,
+  decoration: BoxDecoration(
+    color: const Color(0xFF777777),
+    borderRadius: BorderRadius.circular(9),
+  ),
+  child: Center(
+    child: Container(
+      width: 30,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: IconButton(
         onPressed: showRatioOptions,
+        padding: EdgeInsets.zero,
         icon: const Icon(
           Icons.crop_free,
           color: Colors.white,
           size: 21,
         ),
       ),
+    ),
+  ),
+),
     ],
   ),
 ),
