@@ -846,6 +846,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 ),
               ),
             ),
+          ),
  // Playback controls
 Container(
   height: 48,
