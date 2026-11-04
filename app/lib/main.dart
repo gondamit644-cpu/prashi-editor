@@ -346,7 +346,11 @@ class _EditorScreenState extends State<EditorScreen> {
   bool loading = true;
   String? errorMessage;
   int selectedTool = 0;
+double _videoScale = 1.0;
+double _startScale = 1.0;
 
+Offset _videoOffset = Offset.zero;
+Offset _startOffset = Offset.zero;
   String selectedRatioName = 'Original';
   double? selectedRatio;
 
@@ -822,7 +826,28 @@ class _EditorScreenState extends State<EditorScreen> {
                 style: const TextStyle(color: Colors.white),
               ),
             )
-          : selectedRatio == null
+          : GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onScaleStart: (details) {
+      _startScale = _videoScale;
+      _startOffset = _videoOffset;
+    },
+    onScaleUpdate: (details) {
+      setState(() {
+        _videoScale = (_startScale * details.scale)
+            .clamp(1.0, 4.0)
+            .toDouble();
+
+        _videoOffset =
+            _startOffset + details.focalPointDelta;
+      });
+    },
+    child: ClipRect(
+      child: Transform.translate(
+        offset: _videoOffset,
+        child: Transform.scale(
+          scale: _videoScale,
+          child: selectedRatio == null
               ? Video(
                   controller: videoController,
                   fit: BoxFit.contain,
@@ -836,6 +861,10 @@ class _EditorScreenState extends State<EditorScreen> {
                     controls: NoVideoControls,
                   ),
                 ),
+        ),
+      ),
+    ),
+  ),
               ),
             ),
           ),
