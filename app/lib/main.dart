@@ -845,28 +845,39 @@ Offset _startOffset = Offset.zero;
       });
     },
     child: ClipRect(
-      child: Transform.translate(
-        offset: _videoOffset,
-        child: Transform.scale(
-          scale: _videoScale,
-          child: selectedRatio == null
-              ? Video(
-                  controller: videoController,
-                  fit: BoxFit.contain,
-                  controls: NoVideoControls,
-                )
-              : AspectRatio(
-                  aspectRatio: selectedRatio!,
+  child: selectedRatio == null
+      ? Transform.translate(
+          offset: _videoOffset,
+          child: Transform.scale(
+            scale: _videoScale,
+            child: Video(
+              controller: videoController,
+              fit: BoxFit.contain,
+              controls: NoVideoControls,
+            ),
+          ),
+        )
+      : AspectRatio(
+          aspectRatio: selectedRatio!,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(color: Colors.black),
+              Transform.translate(
+                offset: _videoOffset,
+                child: Transform.scale(
+                  scale: _videoScale,
                   child: Video(
                     controller: videoController,
                     fit: BoxFit.contain,
                     controls: NoVideoControls,
                   ),
                 ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
-  ),
+),
               ),
             ),
           ),
