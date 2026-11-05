@@ -750,7 +750,7 @@ Offset _startOffset = Offset.zero;
             // Top toolbar
             Container(
               height: 48,
-              color: Colors.black,
+              color: const Color(0xFF141414),
               padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Row(
                 children: [
