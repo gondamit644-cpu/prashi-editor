@@ -840,8 +840,7 @@ Offset _startOffset = Offset.zero;
             .clamp(0.1, double.infinity)
             .toDouble();
 
-        _videoOffset =
-            _startOffset + details.focalPointDelta;
+        _videoOffset += details.focalPointDelta;
       });
     },
     child: ClipRect(
