@@ -837,7 +837,7 @@ Offset _startOffset = Offset.zero;
     onScaleUpdate: (details) {
       setState(() {
         _videoScale = (_startScale * details.scale)
-            .clamp(1.0, 4.0)
+            .clamp(0.1, double.infinity)
             .toDouble();
 
         _videoOffset =
