@@ -881,6 +881,7 @@ Offset _startOffset = Offset.zero;
               ),
             ),
           ),
+              ),
  // Playback controls
 Container(
   height: 48,
