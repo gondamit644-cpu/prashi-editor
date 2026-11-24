@@ -44,7 +44,7 @@ jobs:
       - name: Install App Packages
         working-directory: app
         run: |
-          flutter pub add image_picker video_player media_kit media_kit_video media_kit_libs_video ffmpeg_kit_flutter_new saver_gallery path_provider share_plus
+          flutter pub add image_picker video_player media_kit media_kit_video media_kit_libs_video ffmpeg_kit_flutter_new saver_gallery path_provider share_plus video_thumbnail
           flutter pub add --dev flutter_launcher_icons
 
       - name: Generate AmCut Launcher Icons
