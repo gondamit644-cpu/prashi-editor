@@ -881,7 +881,8 @@ Future<void> initializeVideo() async {
     ),
   );
 }
-
+@override
+void dispose() {
     player.dispose();
     super.dispose();
   }
