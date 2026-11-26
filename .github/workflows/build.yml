@@ -36,10 +36,9 @@ jobs:
           test -f app/assets/amcut_icon.png
           test -f app/flutter_launcher_icons.yaml
 
-            - name: Set Android App Name
+      - name: Set Android App Name
         working-directory: app
-        run: |
-          sed -i 's/android:label="[^"]*"/android:label="AmCut"/' android/app/src/main/AndroidManifest.xml
+        run: sed -i 's/android:label="[^"]*"/android:label="AmCut"/' android/app/src/main/AndroidManifest.xml
 
       - name: Install App Packages
         working-directory: app
