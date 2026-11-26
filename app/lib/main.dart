@@ -696,137 +696,192 @@ Future<void> initializeVideo() async {
   }
 
   Widget videoTimeline() {
-    return Container(
-      height: 205,
-      color: const Color(0xFF171717),
-      padding: const EdgeInsets.fromLTRB(12, 9, 12, 5),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              
-              StreamBuilder<Duration>(
-                stream: player.stream.position,
-                initialData: Duration.zero,
-                builder: (context, snapshot) {
-                  return Text(
-                    timeText(snapshot.data ?? Duration.zero),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                    ),
-                  );
-                },
+  return Container(
+    height: 225,
+    color: const Color(0xFF171717),
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 5),
+    child: Column(
+      children: [
+        // Timeline action buttons
+        Row(
+          children: [
+            const Text(
+              'Timeline',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-              const Text(
-                ' / ',
-                style: TextStyle(color: Colors.white54),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: splitSelectedClip,
+              icon: const Icon(Icons.call_split, size: 17),
+              label: const Text('Split'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF00C8E8),
               ),
-              StreamBuilder<Duration>(
-                stream: player.stream.duration,
-                initialData: Duration.zero,
-                builder: (context, snapshot) {
-                  return Text(
-                    timeText(snapshot.data ?? Duration.zero),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                    ),
-                  );
-                },
+            ),
+            TextButton.icon(
+              onPressed: deleteSelectedClip,
+              icon: const Icon(Icons.delete_outline, size: 17),
+              label: const Text('Delete'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.redAccent,
               ),
-            ],
-          ),
-          const SizedBox(height: 9),
+            ),
+          ],
+        ),
 
-          // Video clip strip
-          SizedBox(
-            height: 52,
-            child: Row(
+        // Playback position
+        StreamBuilder<Duration>(
+          stream: player.stream.position,
+          initialData: Duration.zero,
+          builder: (context, snapshot) {
+            final position = snapshot.data ?? Duration.zero;
+            final duration = player.state.duration;
+            final maxMs = duration.inMilliseconds;
+
+            return Row(
               children: [
-                const SizedBox(
-                  width: 75,
-                  child: Row(
-                    children: [
-                      Icon(Icons.movie, color: Colors.white70, size: 16),
-                      SizedBox(width: 5),
-                      Text(
-                        'Video',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
+                Text(
+                  timeText(position),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF353535),
-                      border: Border.all(
-                        color: const Color(0xFF00C8E8),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: Row(
-                        children: List.generate(
-                          7,
-                          (index) => Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: index.isEven
-                                    ? const Color(0xFF555555)
-                                    : const Color(0xFF414141),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                              child: const Icon(
-                                Icons.play_arrow,
-                                color: Colors.white24,
-                                size: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: Slider(
+                    value: maxMs <= 0
+                        ? 0
+                        : position.inMilliseconds
+                            .clamp(0, maxMs)
+                            .toDouble(),
+                    min: 0,
+                    max: maxMs > 0 ? maxMs.toDouble() : 1,
+                    activeColor: const Color(0xFF00C8E8),
+                    inactiveColor: Colors.white24,
+                    onChanged: (value) {
+                      player.seek(
+                        Duration(milliseconds: value.round()),
+                      );
+                    },
+                  ),
+                ),
+                Text(
+                  timeText(duration),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
+        ),
 
-          timelineTrack(
-            icon: Icons.music_note,
-            title: 'Audio',
-            color: const Color(0xFF286C58),
-            label: ' + Add audio',
-            onAdd: () => showTool('Audio'),
-          ),
-          timelineTrack(
-            icon: Icons.text_fields,
-            title: 'Text',
-            color: const Color(0xFF66512D),
-            label: ' + Add text',
-            onAdd: () => showTool('Text'),
-          ),
-          const Spacer(),
-          const Text(
-            'Timeline editing controls will be added separately.',
-            style: TextStyle(color: Colors.white38, fontSize: 9),
-          ),
-        ],
-      ),
-    );
-  }
+        // Separate selectable video clips
+        SizedBox(
+          height: 55,
+          child: Row(
+            children: [
+              const SizedBox(
+                width: 58,
+                child: Text(
+                  'Video',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: videoClips.length,
+                  itemBuilder: (context, index) {
+                    final clip = videoClips[index];
+                    final selected = selectedClipIndex == index;
+                    final clipDuration =
+                        clip['duration'] as Duration;
 
-  @override
-  void dispose() {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedClipIndex = index;
+                        });
+
+                        player.seek(
+                          clip['start'] as Duration,
+                        );
+                      },
+                      child: Container(
+                        width: 115,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF353535),
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            color: selected
+                                ? const Color(0xFF00C8E8)
+                                : Colors.white24,
+                            width: selected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.movie,
+                              color: Colors.white70,
+                              size: 19,
+                            ),
+                            Text(
+                              'Clip ${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              timeText(clipDuration),
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        timelineTrack(
+          icon: Icons.music_note,
+          title: 'Audio',
+          color: const Color(0xFF286C58),
+          label: ' + Add audio',
+          onAdd: () => showTool('Audio'),
+        ),
+
+        timelineTrack(
+          icon: Icons.text_fields,
+          title: 'Text',
+          color: const Color(0xFF66512D),
+          label: ' + Add text',
+          onAdd: () => showTool('Text'),
+        ),
+      ],
+    ),
+  );
+}
+
     player.dispose();
     super.dispose();
   }
