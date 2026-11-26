@@ -340,6 +340,18 @@ class EditorScreen extends StatefulWidget {
 }
 
 class _EditorScreenState extends State<EditorScreen> {
+  
+  // Timeline editing data
+  final List<Map<String, dynamic>> videoClips = [];
+  int selectedClipIndex = 0;
+
+  Duration trimStart = Duration.zero;
+  Duration trimEnd = Duration.zero;
+
+  String? audioPath;
+  String? audioName;
+
+  bool get hasVideoClip => videoClips.isNotEmpty;
   late final Player player;
   late final VideoController videoController;
 
@@ -381,30 +393,109 @@ Offset _startOffset = Offset.zero;
     videoController = VideoController(player);
     initializeVideo();
   }
+ 
+Future<void> initializeVideo() async {
+  try {
+    await player.open(Media(widget.videoPath), play: false);
 
-  Future<void> initializeVideo() async {
-    try {
-      await player.open(Media(widget.videoPath), play: false);
-      if (!mounted) return;
-      setState(() {
-        loading = false;
-        errorMessage = null;
+    if (!mounted) return;
+
+    final duration = player.state.duration;
+
+    setState(() {
+      videoClips.clear();
+
+      videoClips.add({
+        'path': widget.videoPath,
+        'start': Duration.zero,
+        'end': duration,
+        'duration': duration,
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        loading = false;
-        errorMessage = 'Video खुल नहीं पाया: $e';
-      });
+
+      selectedClipIndex = 0;
+      trimStart = Duration.zero;
+      trimEnd = duration;
+
+      loading = false;
+      errorMessage = null;
+    });
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      loading = false;
+      errorMessage = 'Video खुल नहीं पाया: $e';
+    });
+  }
+}
+
+
+  // Split selected video clip at playhead
+  void splitSelectedClip() {
+    if (videoClips.isEmpty) {
+      showMessage('Timeline में कोई वीडियो नहीं है।');
+      return;
     }
+
+    final index = selectedClipIndex;
+    final clip = videoClips[index];
+
+    final start = clip['start'] as Duration;
+    final end = clip['end'] as Duration;
+    final position = player.state.position;
+
+    if (position <= start || position >= end) {
+      showMessage('Split करने के लिए क्लिप के बीच में जाओ।');
+      return;
+    }
+
+    setState(() {
+      final firstClip = {
+        'path': clip['path'],
+        'start': start,
+        'end': position,
+        'duration': position - start,
+      };
+
+      final secondClip = {
+        'path': clip['path'],
+        'start': position,
+        'end': end,
+        'duration': end - position,
+      };
+
+      videoClips.removeAt(index);
+      videoClips.insert(index, secondClip);
+      videoClips.insert(index, firstClip);
+
+      selectedClipIndex = index + 1;
+    });
+
+    showMessage('वीडियो दो क्लिप में Split हो गया।');
   }
 
-  String timeText(Duration d) {
-    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+  // Delete selected clip
+  void deleteSelectedClip() {
+    if (videoClips.isEmpty) {
+      showMessage('डिलीट करने के लिए कोई क्लिप नहीं है।');
+      return;
+    }
+
+    setState(() {
+      videoClips.removeAt(selectedClipIndex);
+
+      if (videoClips.isEmpty) {
+        selectedClipIndex = 0;
+      } else {
+        selectedClipIndex =
+            selectedClipIndex.clamp(0, videoClips.length - 1);
+      }
+    });
+
+    showMessage('चुनी हुई क्लिप Timeline से हट गई।');
   }
 
+  
   void showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
