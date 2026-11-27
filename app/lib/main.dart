@@ -807,7 +807,8 @@ String timeText(Duration d) {
                     final clip = videoClips[index];
                     final selected = selectedClipIndex == index;
                     final clipDuration =
-                        clip['duration'] as Duration;
+                        final clipDuration =
+    (clip['end'] as Duration) - (clip['start'] as Duration);
 
                     return GestureDetector(
                       onTap: () {
